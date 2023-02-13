@@ -1,25 +1,28 @@
+# Set these to the desired values
+ARTIFACT_ID=kubectl-ces-plugin
+VERSION=0.0.1
 
-export GO111MODULE=on
+GOTAG=1.18.6
+MAKEFILES_VERSION=7.2.0
 
-.PHONY: test
-test:
-	go test ./pkg/... ./cmd/... -coverprofile cover.out
+.DEFAULT_GOAL:=help
 
-.PHONY: bin
-bin: fmt vet
-	go build -o .bin/ces github.com/cloudogu/kubectl-ces-plugin/cmd/plugin
+BINARY=
 
-.PHONY: fmt
-fmt:
-	go fmt ./pkg/... ./cmd/...
+include build/make/variables.mk
+GOMODULES=on
 
-.PHONY: vet
-vet:
-	go vet ./pkg/... ./cmd/...
+# You may want to overwrite existing variables for target actions to fit into your project.
 
-.PHONY: kubernetes-deps
-kubernetes-deps:
-	go get k8s.io/client-go@v11.0.0
-	go get k8s.io/api@kubernetes-1.14.0
-	go get k8s.io/apimachinery@kubernetes-1.14.0
-	go get k8s.io/cli-runtime@kubernetes-1.14.0
+include build/make/self-update.mk
+include build/make/dependencies-gomod.mk
+include build/make/build.mk
+include build/make/test-common.mk
+include build/make/test-integration.mk
+include build/make/test-unit.mk
+include build/make/static-analysis.mk
+include build/make/clean.mk
+include build/make/package-debian.mk
+include build/make/deploy-debian.mk
+include build/make/digital-signature.mk
+include build/make/release.mk
