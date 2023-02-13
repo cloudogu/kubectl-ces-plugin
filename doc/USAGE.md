@@ -3,19 +3,19 @@
 The following assumes you have the plugin installed via
 
 ```shell
-kubectl krew install {{ .PluginName }}
+kubectl krew install ces
 ```
 
 ### Scan images in your current kubecontext
 
 ```shell
-kubectl {{ .PluginName }}
+kubectl ces
 ```
 
 ### Scan images in another kubecontext
 
 ```shell
-kubectl {{ .PluginName }} --context=context-name
+kubectl ces --context=context-name
 ```
 
 ## How it works
