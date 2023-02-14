@@ -7,12 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tj/go-spin"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 
 func RootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           "ces",
+		Use:           "kubectl ces [args]...",
 		Short:         "",
 		Long:          `.`,
 		SilenceErrors: true,
@@ -74,6 +76,9 @@ func RootCmd() *cobra.Command {
 	KubernetesConfigFlags.AddFlags(cmd.Flags())
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
+	cmd.AddCommand(dogu.Cmd())
+
 	return cmd
 }
 
