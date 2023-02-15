@@ -52,7 +52,7 @@ func (s DoguConfigService) Edit(doguName string, registryKey string, registryVal
 
 		err = s.registry.DoguConfig(doguName).Set(registryKey, registryValue)
 		if err != nil {
-			return fmt.Errorf("error while editing key '%s' for dogu %s: %w", registryKey, doguName, err)
+			return fmt.Errorf("error while editing key '%s' for dogu '%s': %w", registryKey, doguName, err)
 		}
 
 		return nil
@@ -68,7 +68,7 @@ func (s DoguConfigService) Delete(doguName string, registryKey string) error {
 
 		err = s.registry.DoguConfig(doguName).Delete(registryKey)
 		if err != nil {
-			return fmt.Errorf("error while deleting key '%s' for dogu %s: %w", registryKey, doguName, err)
+			return fmt.Errorf("error while deleting key '%s' for dogu '%s': %w", registryKey, doguName, err)
 		}
 
 		return nil
@@ -85,7 +85,7 @@ func (s DoguConfigService) getAllForDogu(doguName string) (map[string]string, er
 
 		configEntries, err = s.registry.DoguConfig(doguName).GetAll()
 		if err != nil {
-			return fmt.Errorf("error while reading all keys for dogu %s: %w", doguName, err)
+			return fmt.Errorf("error while reading all keys for dogu '%s': %w", doguName, err)
 		}
 
 		return nil
@@ -103,8 +103,9 @@ func (s DoguConfigService) GetValue(doguName string, registryKey string) (string
 
 		configValue, err = s.registry.DoguConfig(doguName).Get(registryKey)
 		if err != nil {
-			return fmt.Errorf("error while reading key '%s' for dogu %s", registryKey, doguName)
+			return fmt.Errorf("error while reading key '%s' for dogu '%s': %w", registryKey, doguName, err)
 		}
+
 		return nil
 	})
 	return configValue, err
@@ -117,7 +118,7 @@ func (s DoguConfigService) checkInstallStatus(wantedDogu string) error {
 	}
 
 	if !enabled {
-		return fmt.Errorf("dogu %s is not installed", wantedDogu)
+		return fmt.Errorf("dogu '%s' is not installed", wantedDogu)
 	}
 	return nil
 }
