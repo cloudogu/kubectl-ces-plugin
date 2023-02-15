@@ -2,64 +2,19 @@ package config
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
-	"strings"
-
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
+
+	"github.com/phayes/freeport"
 
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/registry"
 )
 
-type servicePortForward struct {
-	// RestConfig is the kubernetes config
-	RestConfig *rest.Config
-	// Service is the selected service for this port forwarding
-	Service v1.Service
-	// LocalPort is the local port that will be selected to expose the PodPort
-	LocalPort int
-	// PodPort is the target port for the pod
-	PodPort int
-	// Streams configures where to write or read input from
-	Streams genericclioptions.IOStreams
-}
+func NewDoguConfigService(namespace string, restConfig *rest.Config) (*DoguConfigService, error) {
+	freePort, err := freeport.GetFreePort()
 
-func (spf servicePortForward) ExecuteWithPortForward(fn func() error) error {
-	path := fmt.Sprintf("/api/v1/namespaces/%s/services/%s/portforward",
-		spf.Service.Namespace, spf.Service.Name)
-	hostIP := strings.TrimPrefix(spf.RestConfig.Host, "https://")
-
-	transport, upgrader, err := spdy.RoundTripperFor(spf.RestConfig)
-	if err != nil {
-		return err
-	}
-
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, &url.URL{Scheme: "https", Path: path, Host: hostIP})
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-	readyCh := make(chan struct{})
-	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", spf.LocalPort, spf.PodPort)}, stopCh, readyCh, spf.Streams.Out, spf.Streams.ErrOut)
-	if err != nil {
-		return err
-	}
-
-	err = fw.ForwardPorts()
-	if err != nil {
-		return err
-	}
-
-	<-readyCh
-
-	return fn()
-}
-
-func NewDoguConfigService(namespace string) (*DoguConfigService, error) {
-	endpoint := fmt.Sprintf("http://etcd.%s.svc.cluster.local:4001", namespace)
+	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
 	reg, err := registry.New(core.Registry{
 		Type:      "etcd",
 		Endpoints: []string{endpoint},
@@ -69,14 +24,23 @@ func NewDoguConfigService(namespace string) (*DoguConfigService, error) {
 	}
 
 	return &DoguConfigService{
-		registry:      reg,
-		portForwarder: servicePortForward{}, //TODO
+		registry: reg,
+		portForwarder: KubernetesPortForwarder{
+			RestConfig: restConfig,
+			Type:       ServiceType,
+			NamespacedName: types.NamespacedName{
+				Namespace: namespace,
+				Name:      "etcd",
+			},
+			LocalPort:   freePort,
+			ClusterPort: 4001,
+		},
 	}, nil
 }
 
 type DoguConfigService struct {
 	registry      registry.Registry
-	portForwarder servicePortForward
+	portForwarder PortForwarder
 }
 
 func (s DoguConfigService) Edit(doguName string, registryKey string, registryValue string) error {
