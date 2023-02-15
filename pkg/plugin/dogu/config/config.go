@@ -47,6 +47,7 @@ func (spf servicePortForward) ExecuteWithPortForward(fn func() error) error {
 	if err != nil {
 		return err
 	}
+
 	err = fw.ForwardPorts()
 	if err != nil {
 		return err
@@ -68,68 +69,81 @@ func NewDoguConfigService(namespace string) (*DoguConfigService, error) {
 	}
 
 	return &DoguConfigService{
-		registry: reg,
+		registry:      reg,
+		portForwarder: servicePortForward{}, //TODO
 	}, nil
 }
 
 type DoguConfigService struct {
-	registry registry.Registry
+	registry      registry.Registry
+	portForwarder servicePortForward
 }
 
 func (s DoguConfigService) Edit(doguName string, registryKey string, registryValue string) error {
-	err := s.checkInstallStatus(doguName)
-	if err != nil {
-		return err
-	}
+	return s.portForwarder.ExecuteWithPortForward(func() error {
+		err := s.checkInstallStatus(doguName)
+		if err != nil {
+			return err
+		}
 
-	err = s.registry.DoguConfig(doguName).Set(registryKey, registryValue)
-	if err != nil {
-		return fmt.Errorf("error while editing key '%s' for dogu %s: %w", registryKey, doguName, err)
-	}
+		err = s.registry.DoguConfig(doguName).Set(registryKey, registryValue)
+		if err != nil {
+			return fmt.Errorf("error while editing key '%s' for dogu %s: %w", registryKey, doguName, err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (s DoguConfigService) Delete(doguName string, registryKey string) error {
-	err := s.checkInstallStatus(doguName)
-	if err != nil {
-		return err
-	}
+	return s.portForwarder.ExecuteWithPortForward(func() error {
+		err := s.checkInstallStatus(doguName)
+		if err != nil {
+			return err
+		}
 
-	err = s.registry.DoguConfig(doguName).Delete(registryKey)
-	if err != nil {
-		return fmt.Errorf("error while deleting key '%s' for dogu %s: %w", registryKey, doguName, err)
-	}
+		err = s.registry.DoguConfig(doguName).Delete(registryKey)
+		if err != nil {
+			return fmt.Errorf("error while deleting key '%s' for dogu %s: %w", registryKey, doguName, err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (s DoguConfigService) getAllForDogu(doguName string) (map[string]string, error) {
-	err := s.checkInstallStatus(doguName)
-	if err != nil {
-		return nil, err
-	}
+	var configEntries map[string]string
+	err := s.portForwarder.ExecuteWithPortForward(func() error {
+		err := s.checkInstallStatus(doguName)
+		if err != nil {
+			return err
+		}
 
-	configEntries, err := s.registry.DoguConfig(doguName).GetAll()
-	if err != nil {
-		return nil, fmt.Errorf("error while reading all keys for dogu %s: %w", doguName, err)
-	}
+		configEntries, err = s.registry.DoguConfig(doguName).GetAll()
+		if err != nil {
+			return fmt.Errorf("error while reading all keys for dogu %s: %w", doguName, err)
+		}
 
-	return configEntries, nil
+		return nil
+	})
+	return configEntries, err
 }
 
 func (s DoguConfigService) GetValue(doguName string, registryKey string) (string, error) {
-	err := s.checkInstallStatus(doguName)
-	if err != nil {
-		return "", err
-	}
+	var configValue string
+	err := s.portForwarder.ExecuteWithPortForward(func() error {
+		err := s.checkInstallStatus(doguName)
+		if err != nil {
+			return err
+		}
 
-	configValue, err := s.registry.DoguConfig(doguName).Get(registryKey)
-	if err != nil {
-		return "", fmt.Errorf("error while reading key '%s' for dogu %s", registryKey, doguName)
-	}
-
-	return configValue, nil
+		configValue, err = s.registry.DoguConfig(doguName).Get(registryKey)
+		if err != nil {
+			return fmt.Errorf("error while reading key '%s' for dogu %s", registryKey, doguName)
+		}
+		return nil
+	})
+	return configValue, err
 }
 
 func (s DoguConfigService) checkInstallStatus(wantedDogu string) error {
