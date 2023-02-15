@@ -6,13 +6,28 @@ import (
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "config [edit | delete] [args]...",
+		Use: "config",
 	}
 
 	cmd.AddCommand(
+		getAllForDoguCmd(),
 		editCmd(),
 		deleteCmd(),
 	)
+
+	return cmd
+}
+
+func getAllForDoguCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:              "get",
+		TraverseChildren: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			//panic("not implemented")
+			cmd.Printf("RunE Args are: %v\n", args)
+			return nil
+		},
+	}
 
 	return cmd
 }

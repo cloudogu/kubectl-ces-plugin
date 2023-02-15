@@ -53,6 +53,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
+	github.com/phayes/freeport v0.0.0-20171002181615-b8543db493a5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect

@@ -23,12 +23,13 @@ var (
 
 func RootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           "kubectl ces [args]...",
+		Use:           "kubectl ces",
 		Short:         "",
 		Long:          `.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			//TODO: unhandled error
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
