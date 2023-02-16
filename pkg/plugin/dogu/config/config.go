@@ -11,7 +11,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/registry"
 )
 
-func NewDoguConfigService(namespace string, restConfig *rest.Config) (DoguConfigService, error) {
+func NewPortForwardedDoguConfigService(namespace string, restConfig *rest.Config) (*PortForwardedDoguConfigService, error) {
 	freePort, err := freeport.GetFreePort()
 
 	endpoint := fmt.Sprintf("http://localhost:%d", freePort)

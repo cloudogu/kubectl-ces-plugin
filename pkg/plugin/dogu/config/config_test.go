@@ -11,13 +11,14 @@ import (
 	mocks2 "github.com/cloudogu/cesapp-lib/registry/mocks"
 )
 
-func TestNewDoguConfigService(t *testing.T) {
+func TestNewPortForwardedDoguConfigService(t *testing.T) {
 	t.Run("should construct correctly", func(t *testing.T) {
 		// given
 		namespace := "test-namespace"
 
 		// when
-		actual, err := NewDoguConfigService(namespace, nil)
+		actual, err := NewPortForwardedDoguConfigService(namespace, nil)
+		assert.IsType(t, KubernetesPortForwarder{}, actual.portForwarder)
 
 		// then
 		require.NoError(t, err)
@@ -41,12 +42,12 @@ func TestNewDoguConfigService(t *testing.T) {
 	})
 }
 
-func TestDoguConfigService_Edit(t *testing.T) {
+func TestPortForwardedDoguConfigService_Edit(t *testing.T) {
 	t.Run("should fail during port-forward", func(t *testing.T) {
 		// given
 		pfMock := NewMockPortForwarder(t)
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).Return(assert.AnError).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      nil,
 			portForwarder: pfMock,
 		}
@@ -67,7 +68,7 @@ func TestDoguConfigService_Edit(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -92,7 +93,7 @@ func TestDoguConfigService_Edit(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -117,7 +118,7 @@ func TestDoguConfigService_Edit(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -130,12 +131,12 @@ func TestDoguConfigService_Edit(t *testing.T) {
 	})
 }
 
-func TestDoguConfigService_Delete(t *testing.T) {
+func TestPortForwardedDoguConfigService_Delete(t *testing.T) {
 	t.Run("should fail during port-forward", func(t *testing.T) {
 		// given
 		pfMock := NewMockPortForwarder(t)
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).Return(assert.AnError).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      nil,
 			portForwarder: pfMock,
 		}
@@ -156,7 +157,7 @@ func TestDoguConfigService_Delete(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -181,7 +182,7 @@ func TestDoguConfigService_Delete(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -206,7 +207,7 @@ func TestDoguConfigService_Delete(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -219,12 +220,12 @@ func TestDoguConfigService_Delete(t *testing.T) {
 	})
 }
 
-func TestDoguConfigService_GetAllForDogu(t *testing.T) {
+func TestPortForwardedDoguConfigService_GetAllForDogu(t *testing.T) {
 	t.Run("should fail during port-forward", func(t *testing.T) {
 		// given
 		pfMock := NewMockPortForwarder(t)
 		pfMock.On("ExecuteWithPortForward", mock.Anything).Once().Return(assert.AnError)
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      nil,
 			portForwarder: pfMock,
 		}
@@ -246,7 +247,7 @@ func TestDoguConfigService_GetAllForDogu(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -272,7 +273,7 @@ func TestDoguConfigService_GetAllForDogu(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -302,7 +303,7 @@ func TestDoguConfigService_GetAllForDogu(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -316,12 +317,12 @@ func TestDoguConfigService_GetAllForDogu(t *testing.T) {
 	})
 }
 
-func TestDoguConfigService_GetValue(t *testing.T) {
+func TestPortForwardedDoguConfigService_GetValue(t *testing.T) {
 	t.Run("should fail during port-forward", func(t *testing.T) {
 		// given
 		pfMock := NewMockPortForwarder(t)
 		pfMock.On("ExecuteWithPortForward", mock.Anything).Once().Return(assert.AnError)
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      nil,
 			portForwarder: pfMock,
 		}
@@ -343,7 +344,7 @@ func TestDoguConfigService_GetValue(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -369,7 +370,7 @@ func TestDoguConfigService_GetValue(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -395,7 +396,7 @@ func TestDoguConfigService_GetValue(t *testing.T) {
 		pfMock.EXPECT().ExecuteWithPortForward(mock.Anything).RunAndReturn(func(fn func() error) error {
 			return fn()
 		}).Once()
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -409,7 +410,7 @@ func TestDoguConfigService_GetValue(t *testing.T) {
 	})
 }
 
-func TestDoguConfigService_checkInstallStatus(t *testing.T) {
+func TestPortForwardedDoguConfigService_checkInstallStatus(t *testing.T) {
 	t.Run("should fail on check", func(t *testing.T) {
 		// given
 		doguRegistryMock := mocks2.NewDoguRegistry(t)
@@ -419,7 +420,7 @@ func TestDoguConfigService_checkInstallStatus(t *testing.T) {
 		registryMock.
 			On("DoguRegistry").Once().Return(doguRegistryMock)
 		pfMock := NewMockPortForwarder(t)
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -442,7 +443,7 @@ func TestDoguConfigService_checkInstallStatus(t *testing.T) {
 		registryMock.
 			On("DoguRegistry").Once().Return(doguRegistryMock)
 		pfMock := NewMockPortForwarder(t)
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}
@@ -464,7 +465,7 @@ func TestDoguConfigService_checkInstallStatus(t *testing.T) {
 		registryMock.
 			On("DoguRegistry").Once().Return(doguRegistryMock)
 		pfMock := NewMockPortForwarder(t)
-		sut := DoguConfigService{
+		sut := PortForwardedDoguConfigService{
 			registry:      registryMock,
 			portForwarder: pfMock,
 		}

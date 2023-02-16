@@ -16,7 +16,7 @@ func Test_getAllForDoguCmd(t *testing.T) {
 	RootCmd.SetErr(actual)
 	RootCmd.SetArgs([]string{"dogu", "config", "list", "redmine"})
 	//TODO: mock config service, so that only the CLI is tested, inject mock by overriding the factory
-	config.DoguConfigServiceFactory = func(viper *viper.Viper) (*config2.DoguConfigService, error) {
+	config.DoguConfigServiceFactory = func(viper *viper.Viper) (config2.DoguConfigService, error) {
 		return nil, nil //inject mock here
 	}
 	//err := RootCmd.Execute()
