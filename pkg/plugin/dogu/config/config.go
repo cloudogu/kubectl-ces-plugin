@@ -75,7 +75,7 @@ func (s DoguConfigService) Delete(doguName string, registryKey string) error {
 	})
 }
 
-func (s DoguConfigService) getAllForDogu(doguName string) (map[string]string, error) {
+func (s DoguConfigService) GetAllForDogu(doguName string) (map[string]string, error) {
 	var configEntries map[string]string
 	err := s.portForwarder.ExecuteWithPortForward(func() error {
 		err := s.checkInstallStatus(doguName)
