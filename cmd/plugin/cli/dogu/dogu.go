@@ -8,10 +8,9 @@ import (
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "dogu <dogu-name> <command>",
+		Use: "dogu <command>",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			//TODO: Check if this works
-			doguArg := cmd.PersistentFlags().Arg(1)
+			doguArg := args[0]
 			viper.Set("doguName", doguArg)
 			cmd.Printf("PersistentPreRun Args are: %v\n", args)
 		},
