@@ -11,7 +11,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/registry"
 )
 
-func NewDoguConfigService(namespace string, restConfig *rest.Config) (*DoguConfigService, error) {
+func NewDoguConfigService(namespace string, restConfig *rest.Config) (DoguConfigService, error) {
 	freePort, err := freeport.GetFreePort()
 
 	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
@@ -23,7 +23,7 @@ func NewDoguConfigService(namespace string, restConfig *rest.Config) (*DoguConfi
 		return nil, err
 	}
 
-	return &DoguConfigService{
+	return &PortForwardedDoguConfigService{
 		registry: reg,
 		portForwarder: KubernetesPortForwarder{
 			RestConfig: restConfig,
@@ -38,12 +38,19 @@ func NewDoguConfigService(namespace string, restConfig *rest.Config) (*DoguConfi
 	}, nil
 }
 
-type DoguConfigService struct {
+type DoguConfigService interface {
+	Edit(doguName string, registryKey string, registryValue string) error
+	Delete(doguName string, registryKey string) error
+	GetAllForDogu(doguName string) (map[string]string, error)
+	GetValue(doguName string, registryKey string) (string, error)
+}
+
+type PortForwardedDoguConfigService struct {
 	registry      registry.Registry
 	portForwarder PortForwarder
 }
 
-func (s DoguConfigService) Edit(doguName string, registryKey string, registryValue string) error {
+func (s PortForwardedDoguConfigService) Edit(doguName string, registryKey string, registryValue string) error {
 	return s.portForwarder.ExecuteWithPortForward(func() error {
 		err := s.checkInstallStatus(doguName)
 		if err != nil {
@@ -59,7 +66,7 @@ func (s DoguConfigService) Edit(doguName string, registryKey string, registryVal
 	})
 }
 
-func (s DoguConfigService) Delete(doguName string, registryKey string) error {
+func (s PortForwardedDoguConfigService) Delete(doguName string, registryKey string) error {
 	return s.portForwarder.ExecuteWithPortForward(func() error {
 		err := s.checkInstallStatus(doguName)
 		if err != nil {
@@ -75,7 +82,7 @@ func (s DoguConfigService) Delete(doguName string, registryKey string) error {
 	})
 }
 
-func (s DoguConfigService) GetAllForDogu(doguName string) (map[string]string, error) {
+func (s PortForwardedDoguConfigService) GetAllForDogu(doguName string) (map[string]string, error) {
 	var configEntries map[string]string
 	err := s.portForwarder.ExecuteWithPortForward(func() error {
 		err := s.checkInstallStatus(doguName)
@@ -93,7 +100,7 @@ func (s DoguConfigService) GetAllForDogu(doguName string) (map[string]string, er
 	return configEntries, err
 }
 
-func (s DoguConfigService) GetValue(doguName string, registryKey string) (string, error) {
+func (s PortForwardedDoguConfigService) GetValue(doguName string, registryKey string) (string, error) {
 	var configValue string
 	err := s.portForwarder.ExecuteWithPortForward(func() error {
 		err := s.checkInstallStatus(doguName)
@@ -111,7 +118,7 @@ func (s DoguConfigService) GetValue(doguName string, registryKey string) (string
 	return configValue, err
 }
 
-func (s DoguConfigService) checkInstallStatus(wantedDogu string) error {
+func (s PortForwardedDoguConfigService) checkInstallStatus(wantedDogu string) error {
 	enabled, err := s.registry.DoguRegistry().IsEnabled(wantedDogu)
 	if err != nil {
 		return fmt.Errorf("cannot check if dogu '%s' is installed: %w", wantedDogu, err)
