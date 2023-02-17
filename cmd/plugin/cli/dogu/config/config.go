@@ -88,8 +88,7 @@ func getCmd() *cobra.Command {
 
 func editCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "edit <dogu-name> <configKey> <configValue>",
-		// TODO add completion, dogu name validation
+		Use:  "edit <doguName> <configKey> <configValue>",
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doguName := viper.GetString("doguName")
@@ -115,11 +114,23 @@ func editCmd() *cobra.Command {
 
 func deleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "delete <dogu-name> <registry-key>",
-		// TODO add completion, dogu name validation
+		Use:  "delete <doguName> <configKey>",
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			panic("not implemented")
+			doguName := viper.GetString("doguName")
+			configKey := args[1]
+
+			configService, err := DoguConfigServiceFactory(viper.GetViper())
+			if err != nil {
+				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
+			}
+
+			err = configService.Delete(doguName, configKey)
+			if err != nil {
+				return fmt.Errorf("cannot delete config key '%s' in delete dogu config command: %w", configKey, err)
+			}
+
+			return nil
 		},
 	}
 

@@ -284,7 +284,7 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 
 		//then
 		s.Contains(outBuf.String(),
-			"Usage:\n  config edit <dogu-name> <configKey> <configValue> [flags]",
+			"Usage:\n  config edit <doguName> <configKey> <configValue> [flags]",
 			"should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, fmt.Sprintf("cannot set config key '%s' in edit dogu config command: configService error", configKey))
@@ -313,7 +313,7 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 
 		//then
 		s.Contains(outBuf.String(),
-			"Usage:\n  config edit <dogu-name> <configKey> <configValue> [flags]",
+			"Usage:\n  config edit <doguName> <configKey> <configValue> [flags]",
 			"should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "cannot create config service in get dogu config command: create configService error")
@@ -333,9 +333,110 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 
 		//then
 		s.Contains(
-			outBuf.String(), "Usage:\n  config edit <dogu-name> <configKey> <configValue> [flags]",
+			outBuf.String(), "Usage:\n  config edit <doguName> <configKey> <configValue> [flags]",
 			"should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "accepts 3 arg(s), received 0")
+	})
+}
+
+func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
+	s.Run("should get config value", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+		doguName := "redmine"
+		viper.GetViper().Set("doguName", doguName)
+
+		mock := NewMockDoguConfigService(s.T())
+		configKey := "redmineKey"
+		mock.EXPECT().Delete(doguName, configKey).Return(nil).Once()
+		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+			return mock, nil
+		}
+
+		//when
+		configCmd.SetArgs([]string{"delete", doguName, configKey})
+		err := configCmd.Execute()
+
+		//then
+		s.NoError(err, "command should be successful")
+		s.Empty(outBuf.String())
+		s.Empty(errBuf.String())
+	})
+
+	s.Run("should return error from configService", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+		doguName := "redmine"
+		viper.GetViper().Set("doguName", doguName)
+
+		mock := NewMockDoguConfigService(s.T())
+		configKey := "redmineKey"
+		expectedError := errors.New("configService error")
+		mock.EXPECT().Delete(doguName, configKey).Return(expectedError).Once()
+		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+			return mock, nil
+		}
+
+		//when
+		configCmd.SetArgs([]string{"delete", doguName, configKey})
+		err := configCmd.Execute()
+
+		//then
+		s.Contains(outBuf.String(), "Usage:\n  config delete <doguName> <configKey> [flags]", "should have usage output")
+		s.Contains(errBuf.String(), err.Error(), "should contain error output")
+		s.EqualError(err, fmt.Sprintf("cannot delete config key '%s' in delete dogu config command: configService error", configKey))
+	})
+
+	s.Run("should return error that the config service cannot be created", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+		doguName := "redmine"
+		viper.GetViper().Set("doguName", doguName)
+
+		configKey := "redmineKey"
+		expectedError := errors.New("create configService error")
+		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+			return nil, expectedError
+		}
+
+		//when
+		configCmd.SetArgs([]string{"delete", doguName, configKey})
+		err := configCmd.Execute()
+
+		//then
+		s.Contains(outBuf.String(), "Usage:\n  config delete <doguName> <configKey> [flags]", "should have usage output")
+		s.Contains(errBuf.String(), err.Error(), "should contain error output")
+		s.EqualError(err, "cannot create config service in get dogu config command: create configService error")
+	})
+
+	s.Run("should fail with too few Arguments", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+
+		//when
+		configCmd.SetArgs([]string{"delete"})
+		err := configCmd.Execute()
+
+		//then
+		s.Contains(outBuf.String(), "Usage:\n  config delete <doguName> <configKey> [flags]", "should have usage output")
+		s.Contains(errBuf.String(), err.Error(), "should contain error output")
+		s.EqualError(err, "accepts 2 arg(s), received 0")
 	})
 }
