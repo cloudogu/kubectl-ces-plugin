@@ -37,7 +37,7 @@ var DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, erro
 
 func listAllForDoguCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "list",
+		Use:  "list <doguName>",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configService, err := DoguConfigServiceFactory(viper.GetViper())
