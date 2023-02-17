@@ -64,14 +64,21 @@ func getCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:  "get <doguName> <configKey>",
 		Args: cobra.ExactArgs(2),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.Set("configKey", args[1])
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configKey := args[1]
 			doguName := viper.GetString("doguName")
-			cmd.Printf("exec dogu config get command. dogu name: %s, config key: %s\n", doguName, configKey)
-			cmd.Printf("viper config: %v\n", viper.AllSettings())
+			configKey := args[1]
+
+			configService, err := DoguConfigServiceFactory(viper.GetViper())
+			if err != nil {
+				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
+			}
+
+			configValue, err := configService.GetValue(doguName, configKey)
+			if err != nil {
+				return fmt.Errorf("cannot get config key '%s' in get dogu config command: %w", configKey, err)
+			}
+
+			cmd.Printf(configValue)
 			return nil
 		},
 	}

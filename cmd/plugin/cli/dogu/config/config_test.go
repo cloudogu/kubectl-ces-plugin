@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -53,7 +54,7 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		s.NoError(err, "command should be successful")
 		s.Contains(outBuf.String(), "testKey1: testValue1\n")
 		s.Contains(outBuf.String(), "testKey2: testValue2\n")
-		s.Equal("", errBuf.String())
+		s.Empty(errBuf.String())
 	})
 
 	s.Run("should return error from configService", func() {
@@ -124,5 +125,107 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		s.Contains(outBuf.String(), "Usage:\n  config list <doguName> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "accepts 1 arg(s), received 0")
+	})
+}
+
+func (s *DoguConfigCLITestSuite) Test_getCmd() {
+	s.Run("should get config value", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+		doguName := "redmine"
+		viper.GetViper().Set("doguName", doguName)
+
+		mock := NewMockDoguConfigService(s.T())
+		configKey := "redmineKey"
+		configValue := "redmineValue"
+		mock.EXPECT().GetValue(doguName, configKey).Return(configValue, nil).Once()
+		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+			return mock, nil
+		}
+
+		//when
+		configCmd.SetArgs([]string{"get", doguName, configKey})
+		err := configCmd.Execute()
+
+		//then
+		s.NoError(err, "command should be successful")
+		s.Equal(configValue, outBuf.String())
+		s.Empty(errBuf.String())
+	})
+
+	s.Run("should return error from configService", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+		doguName := "redmine"
+		viper.GetViper().Set("doguName", doguName)
+
+		mock := NewMockDoguConfigService(s.T())
+		configKey := "redmineKey"
+		expectedError := errors.New("configService error")
+		mock.EXPECT().GetValue(doguName, configKey).Return("", expectedError).Once()
+		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+			return mock, nil
+		}
+
+		//when
+		configCmd.SetArgs([]string{"get", doguName, configKey})
+		err := configCmd.Execute()
+
+		//then
+		s.Contains(outBuf.String(), "Usage:\n  config get <doguName> <configKey> [flags]", "should have usage output")
+		s.Contains(errBuf.String(), err.Error(), "should contain error output")
+		s.EqualError(err, fmt.Sprintf("cannot get config key '%s' in get dogu config command: configService error", configKey))
+	})
+
+	s.Run("should return error that the config service cannot be created", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+		doguName := "redmine"
+		viper.GetViper().Set("doguName", doguName)
+
+		configKey := "redmineKey"
+		expectedError := errors.New("create configService error")
+		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+			return nil, expectedError
+		}
+
+		//when
+		configCmd.SetArgs([]string{"get", doguName, configKey})
+		err := configCmd.Execute()
+
+		//then
+		s.Contains(outBuf.String(), "Usage:\n  config get <doguName> <configKey> [flags]", "should have usage output")
+		s.Contains(errBuf.String(), err.Error(), "should contain error output")
+		s.EqualError(err, "cannot create config service in get dogu config command: create configService error")
+	})
+
+	s.Run("should fail with too few Arguments", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+
+		//when
+		configCmd.SetArgs([]string{"get"})
+		err := configCmd.Execute()
+
+		//then
+		s.Contains(outBuf.String(), "Usage:\n  config get <doguName> <configKey> [flags]", "should have usage output")
+		s.Contains(errBuf.String(), err.Error(), "should contain error output")
+		s.EqualError(err, "accepts 2 arg(s), received 0")
 	})
 }
