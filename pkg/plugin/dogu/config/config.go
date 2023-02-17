@@ -38,13 +38,6 @@ func NewPortForwardedDoguConfigService(namespace string, restConfig *rest.Config
 	}, nil
 }
 
-type DoguConfigService interface {
-	Edit(doguName string, registryKey string, registryValue string) error
-	Delete(doguName string, registryKey string) error
-	GetAllForDogu(doguName string) (map[string]string, error)
-	GetValue(doguName string, registryKey string) (string, error)
-}
-
 type PortForwardedDoguConfigService struct {
 	registry      registry.Registry
 	portForwarder PortForwarder

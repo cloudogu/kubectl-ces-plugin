@@ -22,7 +22,14 @@ func Cmd() *cobra.Command {
 	return cmd
 }
 
-var DoguConfigServiceFactory = func(viper *viper.Viper) (config.DoguConfigService, error) {
+type DoguConfigService interface {
+	Edit(doguName string, registryKey string, registryValue string) error
+	Delete(doguName string, registryKey string) error
+	GetAllForDogu(doguName string) (map[string]string, error)
+	GetValue(doguName string, registryKey string) (string, error)
+}
+
+var DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
 	//TODO: add real namespace and Rest-Config
 	service, err := config.NewPortForwardedDoguConfigService("test namespace", nil)
 	return service, err
