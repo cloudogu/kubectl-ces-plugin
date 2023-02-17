@@ -108,4 +108,21 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		s.EqualError(err, "cannot create config service in list dogu config command: create configService error")
 	})
 
+	s.Run("should fail with too few Arguments", func() {
+		//given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		configCmd := Cmd()
+		configCmd.SetOut(outBuf)
+		configCmd.SetErr(errBuf)
+
+		//when
+		configCmd.SetArgs([]string{"list"})
+		err := configCmd.Execute()
+
+		//then
+		s.Contains(outBuf.String(), "Usage:\n  config list <doguName> [flags]", "should have usage output")
+		s.Contains(errBuf.String(), err.Error(), "should contain error output")
+		s.EqualError(err, "accepts 1 arg(s), received 0")
+	})
 }

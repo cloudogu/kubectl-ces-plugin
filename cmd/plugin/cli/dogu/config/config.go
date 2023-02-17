@@ -62,10 +62,10 @@ func listAllForDoguCmd() *cobra.Command {
 
 func getCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "get",
+		Use:  "get <doguName> <configKey>",
 		Args: cobra.ExactArgs(2),
 		PreRun: func(cmd *cobra.Command, args []string) {
-
+			viper.Set("configKey", args[1])
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configKey := args[1]
