@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
@@ -25,9 +26,9 @@ func NewPortForwardedDoguConfigService(namespace string, restConfig *rest.Config
 
 	return &PortForwardedDoguConfigService{
 		registry: reg,
-		portForwarder: KubernetesPortForwarder{
+		portForwarder: portforward.KubernetesPortForwarder{
 			RestConfig: restConfig,
-			Type:       ServiceType,
+			Type:       portforward.ServiceType,
 			NamespacedName: types.NamespacedName{
 				Namespace: namespace,
 				Name:      "etcd",
@@ -40,7 +41,7 @@ func NewPortForwardedDoguConfigService(namespace string, restConfig *rest.Config
 
 type PortForwardedDoguConfigService struct {
 	registry      registry.Registry
-	portForwarder PortForwarder
+	portForwarder portforward.PortForwarder
 }
 
 func (s PortForwardedDoguConfigService) Edit(doguName string, registryKey string, registryValue string) error {

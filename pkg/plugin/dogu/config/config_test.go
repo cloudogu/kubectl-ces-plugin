@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,19 +19,19 @@ func TestNewPortForwardedDoguConfigService(t *testing.T) {
 
 		// when
 		actual, err := NewPortForwardedDoguConfigService(namespace, nil)
-		assert.IsType(t, KubernetesPortForwarder{}, actual.portForwarder)
+		assert.IsType(t, portforward.KubernetesPortForwarder{}, actual.portForwarder)
 
 		// then
 		require.NoError(t, err)
 
-		assert.IsType(t, KubernetesPortForwarder{}, actual.portForwarder)
-		actualPortForwarder := actual.portForwarder.(KubernetesPortForwarder)
+		assert.IsType(t, portforward.KubernetesPortForwarder{}, actual.portForwarder)
+		actualPortForwarder := actual.portForwarder.(portforward.KubernetesPortForwarder)
 
 		assert.NotEmpty(t, actualPortForwarder.LocalPort)
 
-		expectedPortForwarder := KubernetesPortForwarder{
+		expectedPortForwarder := portforward.KubernetesPortForwarder{
 			RestConfig: nil,
-			Type:       ServiceType,
+			Type:       portforward.ServiceType,
 			NamespacedName: types.NamespacedName{
 				Namespace: "test-namespace",
 				Name:      "etcd",

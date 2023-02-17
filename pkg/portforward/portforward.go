@@ -1,4 +1,4 @@
-package config
+package portforward
 
 import (
 	"bytes"
