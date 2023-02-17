@@ -44,7 +44,7 @@ func listAllForDoguCmd() *cobra.Command {
 			}
 
 			for key, value := range configEntries {
-				cmd.Printf("%s, %s\n", key, value)
+				cmd.Printf("%s: %s\n", key, value)
 			}
 			return nil
 		},

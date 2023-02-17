@@ -12,7 +12,6 @@ func Cmd() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			doguArg := args[0]
 			viper.Set("doguName", doguArg)
-			cmd.Printf("PersistentPreRun Args are: %v\n", args)
 		},
 	}
 	cmd.AddCommand(config.Cmd())
