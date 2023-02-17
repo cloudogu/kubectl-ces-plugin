@@ -8,7 +8,8 @@ import (
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "dogu <command>",
+		Use:     "dogu <command>",
+		Aliases: []string{"d"},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			doguArg := args[0]
 			viper.Set("doguName", doguArg)

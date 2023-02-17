@@ -9,7 +9,8 @@ import (
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "config",
+		Use:     "config",
+		Aliases: []string{"c", "cfg", "conf"},
 	}
 
 	cmd.AddCommand(
@@ -37,8 +38,9 @@ var DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, erro
 
 func listAllForDoguCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "list <doguName>",
-		Args: cobra.ExactArgs(1),
+		Use:     "list",
+		Aliases: []string{"l", "ls"},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configService, err := DoguConfigServiceFactory(viper.GetViper())
 			if err != nil {
@@ -62,8 +64,9 @@ func listAllForDoguCmd() *cobra.Command {
 
 func getCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "get <doguName> <configKey>",
-		Args: cobra.ExactArgs(2),
+		Use:     "get <configKey>",
+		Aliases: []string{"g"},
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doguName := viper.GetString("doguName")
 			configKey := args[1]
@@ -88,8 +91,9 @@ func getCmd() *cobra.Command {
 
 func editCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "edit <doguName> <configKey> <configValue>",
-		Args: cobra.ExactArgs(3),
+		Use:     "edit <configKey> <configValue>",
+		Aliases: []string{"e", "set"},
+		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doguName := viper.GetString("doguName")
 			configKey := args[1]
@@ -114,8 +118,9 @@ func editCmd() *cobra.Command {
 
 func deleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "delete <doguName> <configKey>",
-		Args: cobra.ExactArgs(2),
+		Use:     "delete <configKey>",
+		Aliases: []string{"d", "remove", "rm"},
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doguName := viper.GetString("doguName")
 			configKey := args[1]
