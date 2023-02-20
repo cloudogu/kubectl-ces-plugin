@@ -82,13 +82,13 @@ func (dcd *doguConfigurationDelegator) Delegate(doguConfigCall func(dogu *core.D
 		}
 
 		if !doguConf.HasConfiguration(dogu) {
-			logger.NewLogger().Info("dogu %s has no configuration fields\n", dogu.GetSimpleName())
+			logger.NewLogger().Info("dogu %s has no configuration fields", dogu.GetSimpleName())
 			return nil
 		}
 
 		err = doguConfigCall(dogu, dcd.editor)
 		if err != nil {
-			return err
+			return fmt.Errorf("error during registry interaction: %w", err)
 		}
 
 		return nil

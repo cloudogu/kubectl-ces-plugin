@@ -96,8 +96,55 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		// then
 		actual := captureOutput(fakeReaderPipe, fakeWriterPipe, realStdout)
 		require.NoError(t, err)
-		assert.Equal(t, actual, "asdf")
+		assert.Equal(t, actual, "dogu ldap has no configuration fields\n")
 
+	})
+	t.Run("should return error from payload function", func(t *testing.T) {
+		// given
+		portForwarderMock := newMockPortForwarder(t)
+		portForwarderMock.EXPECT().ExecuteWithPortForward(mocks.Anything).RunAndReturn(func(payload func() error) error {
+			return payload()
+		})
+		dogu := readDoguResource(t, ldapBytes)
+		doguRegMock := newMockDoguRegistry(t)
+		doguRegMock.EXPECT().Get(testDoguName).Return(dogu, nil)
+		sut := &doguConfigurationDelegator{
+			doguName:  testDoguName,
+			forwarder: portForwarderMock,
+			doguReg:   doguRegMock,
+		}
+
+		// when
+		err := sut.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
+			return assert.AnError
+		})
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "error during registry interaction: ")
+	})
+	t.Run("should succeed for a reasonable dogu", func(t *testing.T) {
+		// given
+		portForwarderMock := newMockPortForwarder(t)
+		portForwarderMock.EXPECT().ExecuteWithPortForward(mocks.Anything).RunAndReturn(func(payload func() error) error {
+			return payload()
+		})
+		dogu := readDoguResource(t, ldapBytes)
+		doguRegMock := newMockDoguRegistry(t)
+		doguRegMock.EXPECT().Get(testDoguName).Return(dogu, nil)
+		sut := &doguConfigurationDelegator{
+			doguName:  testDoguName,
+			forwarder: portForwarderMock,
+			doguReg:   doguRegMock,
+		}
+
+		// when
+		err := sut.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
+			return nil
+		})
+
+		// then
+		require.NoError(t, err)
 	})
 }
 
