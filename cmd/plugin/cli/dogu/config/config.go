@@ -27,14 +27,14 @@ func Cmd() *cobra.Command {
 }
 
 var DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-	//TODO: add real namespace and Rest-Config
+	// TODO: add real namespace
 	doguName := viper.GetString("doguName")
 	restConfig, err := cli.KubernetesConfigFlags.ToRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("could not create rest config: %w", err)
 	}
 
-	service, err := config.NewDoguConfigService(doguName, "test-namespace", restConfig)
+	service, err := config.New(doguName, "test-namespace", restConfig)
 	return service, err
 }
 

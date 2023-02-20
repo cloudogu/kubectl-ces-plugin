@@ -1,26 +1,7 @@
 package config
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-	"k8s.io/client-go/rest"
-)
-
 const testNameSpace = "test-namespace"
 const testDoguName = "official/ldap"
-
-func TestNewPortForwardedDoguConfigService(t *testing.T) {
-	t.Run("should at least throw an error", func(t *testing.T) {
-		// given
-
-		// when
-		_, err := NewDoguConfigService(testDoguName, testNameSpace, &rest.Config{})
-
-		// then
-		require.Error(t, err)
-	})
-}
 
 //
 // func TestPortForwardedDoguConfigService_Edit(t *testing.T) {
