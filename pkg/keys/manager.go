@@ -10,13 +10,8 @@ import (
 
 var log = core.GetLogger()
 
-type KeyManager interface {
-	GetPublicKey() (*keys.PublicKey, error)
-	ExistsPublicKey() (bool, error)
-}
-
 // NewKeyManager creates a new KeyManager which is able to find and create keys for the given dogu
-func NewKeyManager(registry registry.Registry, doguName string) (*etcdKeyManager, error) {
+func NewKeyManager(registry cesRegistry, doguName string) (*etcdKeyManager, error) {
 	keyType, err := registry.GlobalConfig().Get("key_provider")
 	if err != nil {
 		return nil, fmt.Errorf("could not create etcd key manager: could not read key type: %w", err)
@@ -34,8 +29,8 @@ func NewKeyManager(registry registry.Registry, doguName string) (*etcdKeyManager
 }
 
 type etcdKeyManager struct {
-	doguConfig  registry.ConfigurationContext
-	keyProvider *keys.KeyProvider
+	doguConfig  configurationContext
+	keyProvider keyProvider
 }
 
 // GetPublicKey returns the public key from the dogus etcd directory.
@@ -67,9 +62,11 @@ func (ekm *etcdKeyManager) fetchPublicKey() (*keys.PublicKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch public key from registry: %w", err)
 	}
+
 	publicKey, err := ekm.keyProvider.ReadPublicKeyFromString(publicKeyString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create public key from string: %w", err)
 	}
+
 	return publicKey, nil
 }
