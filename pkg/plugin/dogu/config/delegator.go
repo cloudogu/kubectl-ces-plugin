@@ -5,15 +5,10 @@ import (
 
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
 
-	"github.com/phayes/freeport"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/rest"
-
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/doguConf"
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/keys"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 )
 
 type doguConfigurationDelegator struct {
@@ -23,27 +18,11 @@ type doguConfigurationDelegator struct {
 	editor    doguConfigurationEditor
 }
 
-func newDelegator(doguName string, namespace string, restConfig *rest.Config) (*doguConfigurationDelegator, error) {
-	freePort, err := freeport.GetFreePort()
-	if err != nil {
-		return nil, err
-	}
-
-	forward := portforward.New(restConfig, portforward.ServiceType, types.NamespacedName{Namespace: namespace, Name: "etcd"}, freePort, 4001)
-
-	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
-	etcd, err := registry.New(core.Registry{
-		Type:      "etcd",
-		Endpoints: []string{endpoint},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("could not create etcd registry: %w", err)
-	}
-
+func newDelegator(doguName string, forwarder portForwarder, reg cesRegistry) (*doguConfigurationDelegator, error) {
 	var editor doguConfigurationEditor
-	err = forward.ExecuteWithPortForward(func() error {
+	err := forwarder.ExecuteWithPortForward(func() error {
 
-		keyManager, err := keys.NewKeyManager(etcd, doguName)
+		keyManager, err := keys.NewKeyManager(reg, doguName)
 		if err != nil {
 			return fmt.Errorf("could not create key manager for dogu '%s': %w", doguName, err)
 		}
@@ -53,7 +32,7 @@ func newDelegator(doguName string, namespace string, restConfig *rest.Config) (*
 			return fmt.Errorf("could not get public key for dogu '%s': %w", doguName, err)
 		}
 
-		editor, err = doguConf.NewDoguConfigurationEditor(etcd.DoguConfig(doguName), publicKey)
+		editor, err = doguConf.NewDoguConfigurationEditor(reg.DoguConfig(doguName), publicKey)
 		if err != nil {
 			return fmt.Errorf("could not create configuration editor for dogu '%s': %w", doguName, err)
 		}
@@ -66,8 +45,8 @@ func newDelegator(doguName string, namespace string, restConfig *rest.Config) (*
 
 	return &doguConfigurationDelegator{
 		doguName:  doguName,
-		forwarder: forward,
-		doguReg:   etcd.DoguRegistry(),
+		forwarder: forwarder,
+		doguReg:   reg.DoguRegistry(),
 		editor:    editor,
 	}, nil
 }

@@ -1,12 +1,14 @@
 package dogu
 
 import (
-	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu/config"
 )
 
-func Cmd() *cobra.Command {
+func Cmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "dogu <command>",
 		Aliases: []string{"d"},
@@ -15,6 +17,6 @@ func Cmd() *cobra.Command {
 			viper.Set("doguName", doguArg)
 		},
 	}
-	cmd.AddCommand(config.Cmd())
+	cmd.AddCommand(config.Cmd(k8sArgs))
 	return cmd
 }

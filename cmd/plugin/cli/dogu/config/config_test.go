@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type DoguConfigCLITestSuite struct {
@@ -28,10 +29,10 @@ func (s *DoguConfigCLITestSuite) TearDownSuite() {
 
 func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 	s.Run("should list all config keys", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -46,11 +47,11 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"list", doguName})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.NoError(err, "command should be successful")
 		s.Contains(outBuf.String(), "testKey1: testValue1\n")
 		s.Contains(outBuf.String(), "testKey2: testValue2\n")
@@ -58,10 +59,10 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 	})
 
 	s.Run("should return error from configService", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -74,21 +75,21 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"list", doguName})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config list <doguName> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "cannot list config in list dogu config command: configService error")
 	})
 
 	s.Run("should return error that the config service cannot be created", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -99,29 +100,29 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 			return nil, expectedError
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"list", doguName})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config list <doguName> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "cannot create config service in list dogu config command: create configService error")
 	})
 
 	s.Run("should fail with too few Arguments", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"list"})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config list <doguName> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "accepts 1 arg(s), received 0")
@@ -130,10 +131,10 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 
 func (s *DoguConfigCLITestSuite) Test_getCmd() {
 	s.Run("should get config value", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -147,21 +148,21 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"get", doguName, configKey})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.NoError(err, "command should be successful")
 		s.Equal(configValue, outBuf.String())
 		s.Empty(errBuf.String())
 	})
 
 	s.Run("should return error from configService", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -175,21 +176,21 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"get", doguName, configKey})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config get <doguName> <configKey> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, fmt.Sprintf("cannot get config key '%s' in get dogu config command: configService error", configKey))
 	})
 
 	s.Run("should return error that the config service cannot be created", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -201,29 +202,29 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 			return nil, expectedError
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"get", doguName, configKey})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config get <doguName> <configKey> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "cannot create config service in get dogu config command: create configService error")
 	})
 
 	s.Run("should fail with too few Arguments", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"get"})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config get <doguName> <configKey> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "accepts 2 arg(s), received 0")
@@ -232,10 +233,10 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 
 func (s *DoguConfigCLITestSuite) Test_editCmd() {
 	s.Run("should set config value", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -249,21 +250,21 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.NoError(err, "command should be successful")
 		s.Empty(outBuf.String())
 		s.Empty(errBuf.String())
 	})
 
 	s.Run("should return error from configService", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -278,11 +279,11 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(),
 			"Usage:\n  config edit <doguName> <configKey> <configValue> [flags]",
 			"should have usage output")
@@ -291,10 +292,10 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 	})
 
 	s.Run("should return error that the config service cannot be created", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -307,11 +308,11 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 			return nil, expectedError
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(),
 			"Usage:\n  config edit <doguName> <configKey> <configValue> [flags]",
 			"should have usage output")
@@ -320,18 +321,18 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 	})
 
 	s.Run("should fail with too few Arguments", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"edit"})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(
 			outBuf.String(), "Usage:\n  config edit <doguName> <configKey> <configValue> [flags]",
 			"should have usage output")
@@ -342,10 +343,10 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 
 func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 	s.Run("should get config value", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -358,21 +359,21 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"delete", doguName, configKey})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.NoError(err, "command should be successful")
 		s.Empty(outBuf.String())
 		s.Empty(errBuf.String())
 	})
 
 	s.Run("should return error from configService", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -386,21 +387,21 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 			return mock, nil
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"delete", doguName, configKey})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config delete <doguName> <configKey> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, fmt.Sprintf("cannot delete config key '%s' in delete dogu config command: configService error", configKey))
 	})
 
 	s.Run("should return error that the config service cannot be created", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
@@ -412,29 +413,29 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 			return nil, expectedError
 		}
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"delete", doguName, configKey})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config delete <doguName> <configKey> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "cannot create config service in get dogu config command: create configService error")
 	})
 
 	s.Run("should fail with too few Arguments", func() {
-		//given
+		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd()
+		configCmd := Cmd(nil)
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
-		//when
+		// when
 		configCmd.SetArgs([]string{"delete"})
 		err := configCmd.Execute()
 
-		//then
+		// then
 		s.Contains(outBuf.String(), "Usage:\n  config delete <doguName> <configKey> [flags]", "should have usage output")
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "accepts 2 arg(s), received 0")

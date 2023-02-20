@@ -5,31 +5,31 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 
-	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli"
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin/dogu/config"
 )
 
-func Cmd() *cobra.Command {
+func Cmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "config",
 		Aliases: []string{"c", "cfg", "conf"},
 	}
 
 	cmd.AddCommand(
-		listAllForDoguCmd(),
-		getCmd(),
-		editCmd(),
-		deleteCmd(),
+		listAllForDoguCmd(k8sArgs),
+		getCmd(k8sArgs),
+		editCmd(k8sArgs),
+		deleteCmd(k8sArgs),
 	)
 
 	return cmd
 }
 
-var DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
+var DoguConfigServiceFactory = func(viper *viper.Viper, k8sArgs *genericclioptions.ConfigFlags) (doguConfigService, error) {
 	// TODO: add real namespace
 	doguName := viper.GetString("doguName")
-	restConfig, err := cli.KubernetesConfigFlags.ToRESTConfig()
+	restConfig, err := k8sArgs.ToRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("could not create rest config: %w", err)
 	}
@@ -38,13 +38,13 @@ var DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, erro
 	return service, err
 }
 
-func listAllForDoguCmd() *cobra.Command {
+func listAllForDoguCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configService, err := DoguConfigServiceFactory(viper.GetViper())
+			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
 			if err != nil {
 				return fmt.Errorf("cannot create config service in list dogu config command: %w", err)
 			}
@@ -64,7 +64,7 @@ func listAllForDoguCmd() *cobra.Command {
 	return cmd
 }
 
-func getCmd() *cobra.Command {
+func getCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "get <configKey>",
 		Aliases: []string{"g"},
@@ -72,7 +72,7 @@ func getCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configKey := args[1]
 
-			configService, err := DoguConfigServiceFactory(viper.GetViper())
+			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
 			if err != nil {
 				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
 			}
@@ -90,7 +90,7 @@ func getCmd() *cobra.Command {
 	return cmd
 }
 
-func editCmd() *cobra.Command {
+func editCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "edit <configKey> <configValue>",
 		Aliases: []string{"e", "set"},
@@ -99,7 +99,7 @@ func editCmd() *cobra.Command {
 			configKey := args[1]
 			configValue := args[2]
 
-			configService, err := DoguConfigServiceFactory(viper.GetViper())
+			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
 			if err != nil {
 				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
 			}
@@ -116,7 +116,7 @@ func editCmd() *cobra.Command {
 	return cmd
 }
 
-func deleteCmd() *cobra.Command {
+func deleteCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete <configKey>",
 		Aliases: []string{"d", "remove", "rm"},
@@ -124,7 +124,7 @@ func deleteCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configKey := args[1]
 
-			configService, err := DoguConfigServiceFactory(viper.GetViper())
+			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
 			if err != nil {
 				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
 			}

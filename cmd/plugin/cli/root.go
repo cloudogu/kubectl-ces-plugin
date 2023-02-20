@@ -28,9 +28,12 @@ func RootCmd() *cobra.Command {
 		Long:          `.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			//TODO: unhandled error
-			viper.BindPFlags(cmd.Flags())
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			err := viper.BindPFlags(cmd.Flags())
+			if err != nil {
+				return err
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log := logger.NewLogger()
@@ -78,7 +81,7 @@ func RootCmd() *cobra.Command {
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
-	cmd.AddCommand(dogu.Cmd())
+	cmd.AddCommand(dogu.Cmd(KubernetesConfigFlags))
 
 	return cmd
 }
