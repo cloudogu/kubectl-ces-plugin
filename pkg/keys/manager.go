@@ -16,7 +16,7 @@ type KeyManager interface {
 }
 
 // NewKeyManager creates a new KeyManager which is able to find and create keys for the given dogu
-func NewKeyManager(registry registry.Registry, doguName string) (KeyManager, error) {
+func NewKeyManager(registry registry.Registry, doguName string) (*etcdKeyManager, error) {
 	keyType, err := registry.GlobalConfig().Get("key_provider")
 	if err != nil {
 		return nil, fmt.Errorf("could not create etcd key manager: could not read key type: %w", err)
