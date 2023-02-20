@@ -29,7 +29,7 @@ func newDelegator(doguName string, namespace string, restConfig *rest.Config) (*
 		return nil, err
 	}
 
-	forward := portforward.NewPortForwarder(restConfig, portforward.ServiceType, types.NamespacedName{Namespace: namespace, Name: "etcd"}, freePort, 4001)
+	forward := portforward.New(restConfig, portforward.ServiceType, types.NamespacedName{Namespace: namespace, Name: "etcd"}, freePort, 4001)
 
 	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
 	etcd, err := registry.New(core.Registry{
@@ -78,7 +78,7 @@ func (dcd *doguConfigurationDelegator) Delegate(doguConfigCall func(dogu *core.D
 
 		dogu, err := dcd.doguReg.Get(dcd.doguName)
 		if err != nil {
-			return fmt.Errorf("could get dogu '%s' from etcd: %w", dcd.doguName, err)
+			return fmt.Errorf("could not get dogu '%s' from etcd: %w", dcd.doguName, err)
 		}
 
 		if !doguConf.HasConfiguration(dogu) {

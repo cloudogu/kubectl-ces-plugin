@@ -3,25 +3,32 @@ package portforward
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
+// ResourceType contains the type of the Kubernetes resource kind to which the port forward shall be created.
 type ResourceType string
 
 const (
-	PodType        ResourceType = "pods"
+	// PodType determines the port forward type that goes towards pods.
+	PodType ResourceType = "pods"
+	// DeploymentType determines the port forward type that goes towards deployments.
 	DeploymentType ResourceType = "deployments"
+	// ReplicaSetType determines the port forward type that goes towards replicasets.
 	ReplicaSetType ResourceType = "replicasets"
-	ServiceType    ResourceType = "services"
+	// ServiceType determines the port forward type that goes towards services.
+	ServiceType ResourceType = "services"
 )
 
-func NewPortForwarder(
+// New creates a new port forwarder.
+func New(
 	restConfig *rest.Config,
 	resourceType ResourceType,
 	name types.NamespacedName,
@@ -52,12 +59,12 @@ type kubernetesPortForwarder struct {
 }
 
 // ExecuteWithPortForward establishes a port-forward until the given function returns.
-func (spf kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) error {
+func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) error {
 	path := fmt.Sprintf("/api/v1/namespaces/%s/%s/%s/portforward",
-		spf.name.Namespace, spf.resourceType, spf.name.Name)
-	hostIP := strings.TrimPrefix(spf.restConfig.Host, "https://")
+		kpf.name.Namespace, kpf.resourceType, kpf.name.Name)
+	hostIP := strings.TrimPrefix(kpf.restConfig.Host, "https://")
 
-	transport, upgrader, err := spdy.RoundTripperFor(spf.restConfig)
+	transport, upgrader, err := spdy.RoundTripperFor(kpf.restConfig)
 	if err != nil {
 		return err
 	}
@@ -71,7 +78,7 @@ func (spf kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) error
 	stdOut := new(bytes.Buffer)
 	errOut := new(bytes.Buffer)
 
-	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", spf.localPort, spf.clusterPort)}, stopCh, readyCh, stdOut, errOut)
+	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", kpf.localPort, kpf.clusterPort)}, stopCh, readyCh, stdOut, errOut)
 	if err != nil {
 		return err
 	}
@@ -81,7 +88,7 @@ func (spf kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) error
 		return fmt.Errorf("could not forward port; stdOut: %s; errOut: %s: %w", stdOut, errOut, err)
 	}
 
-	//wait for the port forward to be established
+	// wait for the port forward to be established
 	<-readyCh
 
 	err = fn()
