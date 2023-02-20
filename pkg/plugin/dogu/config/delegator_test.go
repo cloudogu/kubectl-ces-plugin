@@ -1,8 +1,11 @@
 package config
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -65,29 +68,37 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		assert.ErrorContains(t, err, "could not get dogu")
 		assert.ErrorIs(t, err, assert.AnError)
 	})
-	// t.Run("should return error during getting dogu json", func(t *testing.T) {
-	// 	// given
-	// 	portForwarderMock := newMockPortForwarder(t)
-	// 	portForwarderMock.EXPECT().ExecuteWithPortForward(mocks.Anything).RunAndReturn(func(payload func() error) error {
-	// 		return payload()
-	// 	})
-	// 	dogu := readDoguResource(t, ldapBytes)
-	// 	doguRegMock := newMockDoguRegistry(t)
-	// 	doguRegMock.EXPECT().Get(testDoguName).Return(dogu, nil)
-	// 	sut := &doguConfigurationDelegator{
-	// 		doguName:  testDoguName,
-	// 		forwarder: portForwarderMock,
-	// 		doguReg:   doguRegMock,
-	// 	}
-	//
-	// 	// when
-	// 	err := sut.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
-	// 		return nil
-	// 	})
-	//
-	// 	// then
-	// 	require.NoError(t, err)
-	// })
+	t.Run("should return without error because there are no config keys available for the dogu", func(t *testing.T) {
+		// given
+		portForwarderMock := newMockPortForwarder(t)
+		portForwarderMock.EXPECT().ExecuteWithPortForward(mocks.Anything).RunAndReturn(func(payload func() error) error {
+			return payload()
+		})
+		dogu := readDoguResource(t, ldapBytes)
+		dogu.Configuration = []core.ConfigurationField{} // mock zero config keys
+		doguRegMock := newMockDoguRegistry(t)
+		doguRegMock.EXPECT().Get(testDoguName).Return(dogu, nil)
+		sut := &doguConfigurationDelegator{
+			doguName:  testDoguName,
+			forwarder: portForwarderMock,
+			doguReg:   doguRegMock,
+		}
+
+		realStdout := os.Stdout
+		defer restoreOriginalStdout(realStdout)
+		fakeReaderPipe, fakeWriterPipe := routeStdoutToReplacement()
+
+		// when
+		err := sut.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
+			return nil
+		})
+
+		// then
+		actual := captureOutput(fakeReaderPipe, fakeWriterPipe, realStdout)
+		require.NoError(t, err)
+		assert.Equal(t, actual, "asdf")
+
+	})
 }
 
 func readDoguResource(t *testing.T, doguResourceBytes []byte) *core.Dogu {
@@ -100,4 +111,33 @@ func readDoguResource(t *testing.T, doguResourceBytes []byte) *core.Dogu {
 	}
 
 	return data
+}
+
+func routeStdoutToReplacement() (readerPipe, writerPipe *os.File) {
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	return r, w
+}
+
+func captureOutput(fakeReaderPipe, fakeWriterPipe, originalStdout *os.File) string {
+	outC := make(chan string)
+	// copy the output in a separate goroutine so printing can't block indefinitely
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, fakeReaderPipe)
+		outC <- buf.String()
+	}()
+
+	// back to normal state
+	_ = fakeWriterPipe.Close()
+	restoreOriginalStdout(originalStdout)
+
+	actualOutput := <-outC
+
+	return actualOutput
+}
+
+func restoreOriginalStdout(stdout *os.File) {
+	os.Stdout = stdout
 }

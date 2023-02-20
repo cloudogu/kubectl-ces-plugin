@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/fatih/color"
 )
@@ -15,21 +16,21 @@ func NewLogger() *Logger {
 
 func (l *Logger) Info(msg string, args ...interface{}) {
 	if msg == "" {
-		fmt.Println("")
+		_, _ = fmt.Fprintln(os.Stdout, "")
 		return
 	}
 
 	c := color.New(color.FgHiCyan)
-	c.Println(fmt.Sprintf(msg, args...))
+	_, _ = c.Fprintln(os.Stdout, fmt.Sprintf(msg, args...))
 }
 
 func (l *Logger) Error(err error) {
 	c := color.New(color.FgHiRed)
-	c.Println(fmt.Sprintf("%#v", err))
+	_, _ = c.Fprintln(os.Stderr, fmt.Sprintf("%#v", err))
 }
 
 func (l *Logger) Instructions(msg string, args ...interface{}) {
 	white := color.New(color.FgHiWhite)
-	white.Println("")
-	white.Println(fmt.Sprintf(msg, args...))
+	_, _ = white.Fprintln(os.Stdout, "")
+	_, _ = white.Fprintln(os.Stdout, fmt.Sprintf(msg, args...))
 }
