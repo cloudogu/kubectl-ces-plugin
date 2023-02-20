@@ -3,7 +3,7 @@ module github.com/cloudogu/kubectl-ces-plugin
 go 1.18
 
 require (
-	github.com/cloudogu/cesapp-lib v0.9.0
+	github.com/cloudogu/cesapp-lib v0.0.0-20230217125457-068d532aae21
 	github.com/fatih/color v1.14.1
 	github.com/phayes/freeport v0.0.0-20171002181615-b8543db493a5
 	github.com/spf13/cobra v1.6.1

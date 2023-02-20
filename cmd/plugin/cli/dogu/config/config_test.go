@@ -11,7 +11,7 @@ import (
 
 type DoguConfigCLITestSuite struct {
 	suite.Suite
-	originalFactory func(viper *viper.Viper) (DoguConfigService, error)
+	originalFactory func(viper *viper.Viper) (doguConfigService, error)
 }
 
 func TestDoguConfigCLITestSuite(t *testing.T) {
@@ -42,7 +42,7 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		returnedConfig["testKey1"] = "testValue1"
 		returnedConfig["testKey2"] = "testValue2"
 		mock.EXPECT().GetAllForDogu(doguName).Return(returnedConfig, nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -70,7 +70,7 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		mock := NewMockDoguConfigService(s.T())
 		expectedError := errors.New("configService error")
 		mock.EXPECT().GetAllForDogu(doguName).Return(nil, expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -95,7 +95,7 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		viper.GetViper().Set("doguName", doguName)
 
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return nil, expectedError
 		}
 
@@ -143,7 +143,7 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 		configKey := "redmineKey"
 		configValue := "redmineValue"
 		mock.EXPECT().GetValue(doguName, configKey).Return(configValue, nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -171,7 +171,7 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 		configKey := "redmineKey"
 		expectedError := errors.New("configService error")
 		mock.EXPECT().GetValue(doguName, configKey).Return("", expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -197,7 +197,7 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 
 		configKey := "redmineKey"
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return nil, expectedError
 		}
 
@@ -245,7 +245,7 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		configKey := "redmineKey"
 		configValue := "redmineValue"
 		mock.EXPECT().Edit(doguName, configKey, configValue).Return(nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -274,7 +274,7 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		configValue := "redmineValue"
 		expectedError := errors.New("configService error")
 		mock.EXPECT().Edit(doguName, configKey, configValue).Return(expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -303,7 +303,7 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		configKey := "redmineKey"
 		configValue := "redmineValue"
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return nil, expectedError
 		}
 
@@ -354,7 +354,7 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		mock := NewMockDoguConfigService(s.T())
 		configKey := "redmineKey"
 		mock.EXPECT().Delete(doguName, configKey).Return(nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -382,7 +382,7 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		configKey := "redmineKey"
 		expectedError := errors.New("configService error")
 		mock.EXPECT().Delete(doguName, configKey).Return(expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return mock, nil
 		}
 
@@ -408,7 +408,7 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 
 		configKey := "redmineKey"
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 			return nil, expectedError
 		}
 

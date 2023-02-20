@@ -2,9 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin/dogu/config"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin/dogu/config"
 )
 
 func Cmd() *cobra.Command {
@@ -23,16 +26,15 @@ func Cmd() *cobra.Command {
 	return cmd
 }
 
-type DoguConfigService interface {
-	Edit(doguName string, registryKey string, registryValue string) error
-	Delete(doguName string, registryKey string) error
-	GetAllForDogu(doguName string) (map[string]string, error)
-	GetValue(doguName string, registryKey string) (string, error)
-}
-
-var DoguConfigServiceFactory = func(viper *viper.Viper) (DoguConfigService, error) {
+var DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
 	//TODO: add real namespace and Rest-Config
-	service, err := config.NewPortForwardedDoguConfigService("test namespace", nil)
+	doguName := viper.GetString("doguName")
+	restConfig, err := cli.KubernetesConfigFlags.ToRESTConfig()
+	if err != nil {
+		return nil, fmt.Errorf("could not create rest config: %w", err)
+	}
+
+	service, err := config.NewDoguConfigService(doguName, "test-namespace", restConfig)
 	return service, err
 }
 
@@ -47,7 +49,7 @@ func listAllForDoguCmd() *cobra.Command {
 				return fmt.Errorf("cannot create config service in list dogu config command: %w", err)
 			}
 
-			configEntries, err := configService.GetAllForDogu(viper.GetString("doguName"))
+			configEntries, err := configService.GetAllForDogu()
 			if err != nil {
 				return fmt.Errorf("cannot list config in list dogu config command: %w", err)
 			}
@@ -68,7 +70,6 @@ func getCmd() *cobra.Command {
 		Aliases: []string{"g"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			doguName := viper.GetString("doguName")
 			configKey := args[1]
 
 			configService, err := DoguConfigServiceFactory(viper.GetViper())
@@ -76,7 +77,7 @@ func getCmd() *cobra.Command {
 				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
 			}
 
-			configValue, err := configService.GetValue(doguName, configKey)
+			configValue, err := configService.GetValue(configKey)
 			if err != nil {
 				return fmt.Errorf("cannot get config key '%s' in get dogu config command: %w", configKey, err)
 			}
@@ -95,7 +96,6 @@ func editCmd() *cobra.Command {
 		Aliases: []string{"e", "set"},
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			doguName := viper.GetString("doguName")
 			configKey := args[1]
 			configValue := args[2]
 
@@ -104,7 +104,7 @@ func editCmd() *cobra.Command {
 				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
 			}
 
-			err = configService.Edit(doguName, configKey, configValue)
+			err = configService.Edit(configKey, configValue)
 			if err != nil {
 				return fmt.Errorf("cannot set config key '%s' in edit dogu config command: %w", configKey, err)
 			}
@@ -122,7 +122,6 @@ func deleteCmd() *cobra.Command {
 		Aliases: []string{"d", "remove", "rm"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			doguName := viper.GetString("doguName")
 			configKey := args[1]
 
 			configService, err := DoguConfigServiceFactory(viper.GetViper())
@@ -130,7 +129,7 @@ func deleteCmd() *cobra.Command {
 				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
 			}
 
-			err = configService.Delete(doguName, configKey)
+			err = configService.Delete(configKey)
 			if err != nil {
 				return fmt.Errorf("cannot delete config key '%s' in delete dogu config command: %w", configKey, err)
 			}

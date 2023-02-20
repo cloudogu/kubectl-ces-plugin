@@ -2,124 +2,136 @@ package config
 
 import (
 	"fmt"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
+
+	"github.com/phayes/freeport"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
-	"github.com/phayes/freeport"
-
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/cesapp-lib/doguConf"
 	"github.com/cloudogu/cesapp-lib/registry"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/keys"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 )
 
-func NewPortForwardedDoguConfigService(namespace string, restConfig *rest.Config) (*PortForwardedDoguConfigService, error) {
+type doguConfigurationDelegator struct {
+	doguName  string
+	forwarder portForwarder
+	doguReg   registry.DoguRegistry
+	editor    doguConfigurationEditor
+}
+
+func newDoguConfigurationDelegator(doguName string, namespace string, restConfig *rest.Config) (*doguConfigurationDelegator, error) {
 	freePort, err := freeport.GetFreePort()
+	if err != nil {
+		return nil, err
+	}
+
+	var forward portForwarder
+	forward = portforward.NewPortForwarder(restConfig, portforward.ServiceType, types.NamespacedName{Namespace: namespace, Name: "etcd"}, freePort, 4001)
 
 	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
-	reg, err := registry.New(core.Registry{
+	etcd, err := registry.New(core.Registry{
 		Type:      "etcd",
 		Endpoints: []string{endpoint},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not create etcd registry: %w", err)
+	}
+
+	var editor doguConfigurationEditor
+	err = forward.ExecuteWithPortForward(func() error {
+
+		keyManager, err := keys.NewKeyManager(etcd, doguName)
+		if err != nil {
+			return fmt.Errorf("could not create key manager for dogu '%s': %w", doguName, err)
+		}
+
+		publicKey, err := keyManager.GetPublicKey()
+		if err != nil {
+			return fmt.Errorf("could not get public key for dogu '%s': %w", doguName, err)
+		}
+
+		editor, err = doguConf.NewDoguConfigurationEditor(etcd.DoguConfig(doguName), publicKey)
+		if err != nil {
+			return fmt.Errorf("could not create configuration editor for dogu '%s': %w", doguName, err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &PortForwardedDoguConfigService{
-		registry: reg,
-		portForwarder: portforward.KubernetesPortForwarder{
-			RestConfig: restConfig,
-			Type:       portforward.ServiceType,
-			NamespacedName: types.NamespacedName{
-				Namespace: namespace,
-				Name:      "etcd",
-			},
-			LocalPort:   freePort,
-			ClusterPort: 4001,
-		},
+	return &doguConfigurationDelegator{
+		doguName:  doguName,
+		forwarder: forward,
+		doguReg:   etcd.DoguRegistry(),
+		editor:    editor,
 	}, nil
 }
 
-type PortForwardedDoguConfigService struct {
-	registry      registry.Registry
-	portForwarder portforward.PortForwarder
-}
+func (dcd *doguConfigurationDelegator) Delegate(doguConfigCall func(dogu *core.Dogu, editor doguConfigurationEditor) error) error {
+	err := dcd.forwarder.ExecuteWithPortForward(func() error {
 
-func (s PortForwardedDoguConfigService) Edit(doguName string, registryKey string, registryValue string) error {
-	return s.portForwarder.ExecuteWithPortForward(func() error {
-		err := s.checkInstallStatus(doguName)
+		dogu, err := dcd.doguReg.Get(dcd.doguName)
+		if err != nil {
+			return fmt.Errorf("could get dogu '%s' from etcd: %w", dcd.doguName, err)
+		}
+
+		if !doguConf.HasConfiguration(dogu) {
+			logger.NewLogger().Info("dogu %s has no configuration fields\n", dogu.GetSimpleName())
+			return nil
+		}
+
+		err = doguConfigCall(dogu, dcd.editor)
 		if err != nil {
 			return err
 		}
 
-		err = s.registry.DoguConfig(doguName).Set(registryKey, registryValue)
-		if err != nil {
-			return fmt.Errorf("error while editing key '%s' for dogu '%s': %w", registryKey, doguName, err)
-		}
-
 		return nil
 	})
-}
-
-func (s PortForwardedDoguConfigService) Delete(doguName string, registryKey string) error {
-	return s.portForwarder.ExecuteWithPortForward(func() error {
-		err := s.checkInstallStatus(doguName)
-		if err != nil {
-			return err
-		}
-
-		err = s.registry.DoguConfig(doguName).Delete(registryKey)
-		if err != nil {
-			return fmt.Errorf("error while deleting key '%s' for dogu '%s': %w", registryKey, doguName, err)
-		}
-
-		return nil
-	})
-}
-
-func (s PortForwardedDoguConfigService) GetAllForDogu(doguName string) (map[string]string, error) {
-	var configEntries map[string]string
-	err := s.portForwarder.ExecuteWithPortForward(func() error {
-		err := s.checkInstallStatus(doguName)
-		if err != nil {
-			return err
-		}
-
-		configEntries, err = s.registry.DoguConfig(doguName).GetAll()
-		if err != nil {
-			return fmt.Errorf("error while reading all keys for dogu '%s': %w", doguName, err)
-		}
-
-		return nil
-	})
-	return configEntries, err
-}
-
-func (s PortForwardedDoguConfigService) GetValue(doguName string, registryKey string) (string, error) {
-	var configValue string
-	err := s.portForwarder.ExecuteWithPortForward(func() error {
-		err := s.checkInstallStatus(doguName)
-		if err != nil {
-			return err
-		}
-
-		configValue, err = s.registry.DoguConfig(doguName).Get(registryKey)
-		if err != nil {
-			return fmt.Errorf("error while reading key '%s' for dogu '%s': %w", registryKey, doguName, err)
-		}
-
-		return nil
-	})
-	return configValue, err
-}
-
-func (s PortForwardedDoguConfigService) checkInstallStatus(wantedDogu string) error {
-	enabled, err := s.registry.DoguRegistry().IsEnabled(wantedDogu)
 	if err != nil {
-		return fmt.Errorf("cannot check if dogu '%s' is installed: %w", wantedDogu, err)
+		return err
 	}
 
-	if !enabled {
-		return fmt.Errorf("dogu '%s' is not installed", wantedDogu)
-	}
 	return nil
+}
+
+func NewDoguConfigService(doguName, namespace string, restConfig *rest.Config) (*doguConfigService, error) {
+	delegator, err := newDoguConfigurationDelegator(doguName, namespace, restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &doguConfigService{
+		delegator: delegator,
+	}, nil
+}
+
+type doguConfigService struct {
+	delegator *doguConfigurationDelegator
+}
+
+func (s doguConfigService) EditAllInteractive() error {
+	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
+		return editor.EditConfiguration(dogu.Configuration)
+	})
+}
+
+func (s doguConfigService) Edit(registryKey string, registryValue string) error {
+	panic("todo")
+}
+
+func (s doguConfigService) Delete(registryKey string) error {
+	panic("todo")
+}
+
+func (s doguConfigService) GetAllForDogu() (map[string]string, error) {
+	panic("todo")
+}
+
+func (s doguConfigService) GetValue(registryKey string) (string, error) {
+	panic("todo")
 }
