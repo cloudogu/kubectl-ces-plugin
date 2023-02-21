@@ -20,6 +20,48 @@ func (_m *mockDoguConfigurationEditor) EXPECT() *mockDoguConfigurationEditor_Exp
 	return &mockDoguConfigurationEditor_Expecter{mock: &_m.Mock}
 }
 
+// DeleteField provides a mock function with given fields: field
+func (_m *mockDoguConfigurationEditor) DeleteField(field core.ConfigurationField) error {
+	ret := _m.Called(field)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(core.ConfigurationField) error); ok {
+		r0 = rf(field)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockDoguConfigurationEditor_DeleteField_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteField'
+type mockDoguConfigurationEditor_DeleteField_Call struct {
+	*mock.Call
+}
+
+// DeleteField is a helper method to define mock.On call
+//  - field core.ConfigurationField
+func (_e *mockDoguConfigurationEditor_Expecter) DeleteField(field interface{}) *mockDoguConfigurationEditor_DeleteField_Call {
+	return &mockDoguConfigurationEditor_DeleteField_Call{Call: _e.mock.On("DeleteField", field)}
+}
+
+func (_c *mockDoguConfigurationEditor_DeleteField_Call) Run(run func(field core.ConfigurationField)) *mockDoguConfigurationEditor_DeleteField_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(core.ConfigurationField))
+	})
+	return _c
+}
+
+func (_c *mockDoguConfigurationEditor_DeleteField_Call) Return(_a0 error) *mockDoguConfigurationEditor_DeleteField_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockDoguConfigurationEditor_DeleteField_Call) RunAndReturn(run func(core.ConfigurationField) error) *mockDoguConfigurationEditor_DeleteField_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EditConfiguration provides a mock function with given fields: fields
 func (_m *mockDoguConfigurationEditor) EditConfiguration(fields []core.ConfigurationField) error {
 	ret := _m.Called(fields)

@@ -20,6 +20,8 @@ type doguConfigurationEditor interface {
 	GetCurrentValue(field core.ConfigurationField) (string, error)
 	// SetFieldToValue set the Field as value into the editor.
 	SetFieldToValue(field core.ConfigurationField, value string) error
+	// DeleteField deletes the field.
+	DeleteField(field core.ConfigurationField) error
 }
 
 type keyManager interface {
