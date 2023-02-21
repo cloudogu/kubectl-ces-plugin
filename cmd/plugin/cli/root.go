@@ -1,20 +1,16 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tj/go-spin"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin"
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
 )
 
 var (
@@ -22,6 +18,7 @@ var (
 )
 
 func RootCmd() *cobra.Command {
+
 	cmd := &cobra.Command{
 		Use:           "kubectl ces",
 		Short:         "",
@@ -33,43 +30,6 @@ func RootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			log := logger.NewLogger()
-			log.Info("")
-
-			s := spin.New()
-			finishedCh := make(chan bool, 1)
-			namespaceName := make(chan string, 1)
-			go func() {
-				lastNamespaceName := ""
-				for {
-					select {
-					case <-finishedCh:
-						fmt.Printf("\r")
-						return
-					case n := <-namespaceName:
-						lastNamespaceName = n
-					case <-time.After(time.Millisecond * 100):
-						if lastNamespaceName == "" {
-							fmt.Printf("\r  \033[36mSearching for namespaces\033[m %s", s.Next())
-						} else {
-							fmt.Printf("\r  \033[36mSearching for namespaces\033[m %s (%s)", s.Next(), lastNamespaceName)
-						}
-					}
-				}
-			}()
-			defer func() {
-				finishedCh <- true
-			}()
-
-			if err := plugin.RunPlugin(KubernetesConfigFlags, namespaceName); err != nil {
-				return errors.Unwrap(err)
-			}
-
-			log.Info("")
-
 			return nil
 		},
 	}
