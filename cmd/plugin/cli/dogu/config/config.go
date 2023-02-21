@@ -6,47 +6,53 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/rest"
 
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin/dogu/config"
 )
 
-func Cmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
+const (
+	errMsgDoguConfigServiceCreate = "cannot create config service in get dogu config command: %w"
+)
+
+var doguConfigServiceFactory = func(doguName, k8sNamespace string, restConfig *rest.Config) (doguConfigService, error) {
+	return config.New(doguName, k8sNamespace, restConfig)
+}
+
+func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "config",
 		Aliases: []string{"c", "cfg", "conf"},
 	}
 
 	cmd.AddCommand(
-		listAllForDoguCmd(k8sArgs),
-		getCmd(k8sArgs),
-		editCmd(k8sArgs),
-		deleteCmd(k8sArgs),
+		listAllForDoguCmd(),
+		getCmd(),
+		editCmd(),
+		deleteCmd(),
 	)
 
 	return cmd
 }
 
-var DoguConfigServiceFactory = func(viper *viper.Viper, k8sArgs *genericclioptions.ConfigFlags) (doguConfigService, error) {
-	// TODO: add real namespace
-	doguName := viper.GetString("doguName")
-	restConfig, err := k8sArgs.ToRESTConfig()
-	if err != nil {
-		return nil, fmt.Errorf("could not create rest config: %w", err)
-	}
-
-	service, err := config.New(doguName, "test-namespace", restConfig)
-	return service, err
-}
-
-func listAllForDoguCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
+func listAllForDoguCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
+			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
+			namespace := "test-namespace"
+			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
+			restConfig, err := createRestConfig(k8sArgs)
 			if err != nil {
-				return fmt.Errorf("cannot create config service in list dogu config command: %w", err)
+				return err
+			}
+
+			configService, err := doguConfigServiceFactory(doguName, namespace, restConfig)
+			if err != nil {
+				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
 
 			configEntries, err := configService.GetAllForDogu()
@@ -64,7 +70,7 @@ func listAllForDoguCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	return cmd
 }
 
-func getCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
+func getCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "get <configKey>",
 		Aliases: []string{"g"},
@@ -72,9 +78,17 @@ func getCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configKey := args[1]
 
-			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
+			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
+			namespace := "test-namespace"
+			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
+			restConfig, err := createRestConfig(k8sArgs)
 			if err != nil {
-				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
+				return err
+			}
+
+			configService, err := doguConfigServiceFactory(doguName, namespace, restConfig)
+			if err != nil {
+				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
 
 			configValue, err := configService.GetValue(configKey)
@@ -90,7 +104,7 @@ func getCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	return cmd
 }
 
-func editCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
+func editCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "edit <configKey> <configValue>",
 		Aliases: []string{"e", "set"},
@@ -99,9 +113,17 @@ func editCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 			configKey := args[1]
 			configValue := args[2]
 
-			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
+			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
+			namespace := "test-namespace"
+			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
+			restConfig, err := createRestConfig(k8sArgs)
 			if err != nil {
-				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
+				return err
+			}
+
+			configService, err := doguConfigServiceFactory(doguName, namespace, restConfig)
+			if err != nil {
+				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
 
 			err = configService.Edit(configKey, configValue)
@@ -116,7 +138,7 @@ func editCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	return cmd
 }
 
-func deleteCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
+func deleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete <configKey>",
 		Aliases: []string{"d", "remove", "rm"},
@@ -124,9 +146,17 @@ func deleteCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configKey := args[1]
 
-			configService, err := DoguConfigServiceFactory(viper.GetViper(), k8sArgs)
+			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
+			namespace := "test-namespace"
+			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
+			restConfig, err := createRestConfig(k8sArgs)
 			if err != nil {
-				return fmt.Errorf("cannot create config service in get dogu config command: %w", err)
+				return err
+			}
+
+			configService, err := doguConfigServiceFactory(doguName, namespace, restConfig)
+			if err != nil {
+				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
 
 			err = configService.Delete(configKey)
@@ -139,4 +169,20 @@ func deleteCmd(k8sArgs *genericclioptions.ConfigFlags) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func createRestConfig(k8sArgs interface{}) (*rest.Config, error) {
+	restConfig, err := (k8sArgs).(*genericclioptions.ConfigFlags).ToRESTConfig()
+	if err != nil {
+		return nil, fmt.Errorf("could not create rest config: %w", err)
+	}
+	return restConfig, nil
+}
+
+func getTransportArgAsString(paramName string) string {
+	return viper.GetViper().GetString(paramName)
+}
+
+func getTransportArg(paramName string) interface{} {
+	return viper.GetViper().Get(paramName)
 }

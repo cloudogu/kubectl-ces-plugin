@@ -40,8 +40,9 @@ func RootCmd() *cobra.Command {
 	KubernetesConfigFlags.AddFlags(cmd.Flags())
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.Set(util.CliTransportParamK8sArgs, KubernetesConfigFlags)
 
-	cmd.AddCommand(dogu.Cmd(KubernetesConfigFlags))
+	cmd.AddCommand(dogu.Cmd())
 
 	return cmd
 }

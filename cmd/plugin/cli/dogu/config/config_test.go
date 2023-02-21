@@ -8,11 +8,14 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
+	"k8s.io/client-go/rest"
+
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
 )
 
 type DoguConfigCLITestSuite struct {
 	suite.Suite
-	originalFactory func(viper *viper.Viper) (doguConfigService, error)
+	originalFactory func(doguName, k8sNamespace string, restConfig *rest.Config) (doguConfigService, error)
 }
 
 func TestDoguConfigCLITestSuite(t *testing.T) {
@@ -20,11 +23,11 @@ func TestDoguConfigCLITestSuite(t *testing.T) {
 }
 
 func (s *DoguConfigCLITestSuite) SetupSuite() {
-	s.originalFactory = DoguConfigServiceFactory
+	s.originalFactory = doguConfigServiceFactory
 }
 
 func (s *DoguConfigCLITestSuite) TearDownSuite() {
-	DoguConfigServiceFactory = s.originalFactory
+	doguConfigServiceFactory = s.originalFactory
 }
 
 func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
@@ -32,20 +35,18 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		returnedConfig := make(map[string]string)
 		returnedConfig["testKey1"] = "testValue1"
 		returnedConfig["testKey2"] = "testValue2"
-		mock.EXPECT().GetAllForDogu(doguName).Return(returnedConfig, nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().GetAllForDogu().Return(returnedConfig, nil).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"list", doguName})
@@ -62,18 +63,16 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		expectedError := errors.New("configService error")
-		mock.EXPECT().GetAllForDogu(doguName).Return(nil, expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().GetAllForDogu().Return(nil, expectedError).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"list", doguName})
@@ -89,16 +88,14 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return nil, expectedError
-		}
+		doguConfigServiceFactory = errorDoguConfigServiceFactory(expectedError)
 
 		// when
 		configCmd.SetArgs([]string{"list", doguName})
@@ -114,7 +111,7 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
@@ -134,19 +131,17 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		configKey := "redmineKey"
 		configValue := "redmineValue"
-		mock.EXPECT().GetValue(doguName, configKey).Return(configValue, nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().GetValue(configKey).Return(configValue, nil).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"get", doguName, configKey})
@@ -162,19 +157,17 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		configKey := "redmineKey"
 		expectedError := errors.New("configService error")
-		mock.EXPECT().GetValue(doguName, configKey).Return("", expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().GetValue(configKey).Return("", expectedError).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"get", doguName, configKey})
@@ -190,17 +183,15 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
 		configKey := "redmineKey"
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return nil, expectedError
-		}
+		doguConfigServiceFactory = errorDoguConfigServiceFactory(expectedError)
 
 		// when
 		configCmd.SetArgs([]string{"get", doguName, configKey})
@@ -216,7 +207,7 @@ func (s *DoguConfigCLITestSuite) Test_getCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
@@ -236,19 +227,17 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		configKey := "redmineKey"
 		configValue := "redmineValue"
-		mock.EXPECT().Edit(doguName, configKey, configValue).Return(nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue).Return(nil).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
@@ -264,20 +253,18 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		configKey := "redmineKey"
 		configValue := "redmineValue"
 		expectedError := errors.New("configService error")
-		mock.EXPECT().Edit(doguName, configKey, configValue).Return(expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue).Return(expectedError).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
@@ -295,18 +282,16 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
 		configKey := "redmineKey"
 		configValue := "redmineValue"
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return nil, expectedError
-		}
+		doguConfigServiceFactory = errorDoguConfigServiceFactory(expectedError)
 
 		// when
 		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
@@ -324,7 +309,7 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
@@ -346,18 +331,16 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		configKey := "redmineKey"
-		mock.EXPECT().Delete(doguName, configKey).Return(nil).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().Delete(configKey).Return(nil).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"delete", doguName, configKey})
@@ -373,19 +356,17 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
-		mock := NewMockDoguConfigService(s.T())
+		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		configKey := "redmineKey"
 		expectedError := errors.New("configService error")
-		mock.EXPECT().Delete(doguName, configKey).Return(expectedError).Once()
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return mock, nil
-		}
+		doguConfigServiceFactoryMock.EXPECT().Delete(configKey).Return(expectedError).Once()
+		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
 		configCmd.SetArgs([]string{"delete", doguName, configKey})
@@ -401,17 +382,15 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 		doguName := "redmine"
-		viper.GetViper().Set("doguName", doguName)
+		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
 		configKey := "redmineKey"
 		expectedError := errors.New("create configService error")
-		DoguConfigServiceFactory = func(viper *viper.Viper) (doguConfigService, error) {
-			return nil, expectedError
-		}
+		doguConfigServiceFactory = errorDoguConfigServiceFactory(expectedError)
 
 		// when
 		configCmd.SetArgs([]string{"delete", doguName, configKey})
@@ -427,7 +406,7 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := Cmd(nil)
+		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
 
@@ -440,4 +419,16 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "accepts 2 arg(s), received 0")
 	})
+}
+
+func noopDoguConfigServiceFactory(configServiceMock *mockDoguConfigService) func(doguName string, k8sNamespace string, restConfig *rest.Config) (doguConfigService, error) {
+	return func(doguName, k8sNamespace string, restConfig *rest.Config) (doguConfigService, error) {
+		return configServiceMock, nil
+	}
+}
+
+func errorDoguConfigServiceFactory(expectedError error) func(doguName string, k8sNamespace string, restConfig *rest.Config) (doguConfigService, error) {
+	return func(doguName, k8sNamespace string, restConfig *rest.Config) (doguConfigService, error) {
+		return nil, expectedError
+	}
 }
