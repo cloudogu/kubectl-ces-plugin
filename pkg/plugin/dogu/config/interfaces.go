@@ -48,20 +48,5 @@ type doguRegistry interface {
 // cesRegistry represents the main registry of a Cloudogu EcoSystem. The registry
 // manage dogus, their configuration and their states.
 type cesRegistry interface {
-	// GlobalConfig returns a ConfigurationContext for the global context
-	GlobalConfig() registry.ConfigurationContext
-	// HostConfig returns a ConfigurationContext for the host context
-	HostConfig(hostService string) registry.ConfigurationContext
-	// DoguConfig returns a ConfigurationContext for the given dogu
-	DoguConfig(dogu string) registry.ConfigurationContext
-	// State returns the state object for the given dogu
-	State(dogu string) registry.State
-	// DoguRegistry returns an object which is able to manage dogus
-	DoguRegistry() registry.DoguRegistry
-	// BlueprintRegistry to maintain a blueprint history
-	BlueprintRegistry() registry.ConfigurationContext
-	// RootConfig returns a WatchConfigurationContext for the root context
-	RootConfig() registry.WatchConfigurationContext
-	// GetNode returns all keys that are included in any path, packed as Node
-	GetNode() (registry.Node, error)
+	registry.Registry
 }

@@ -21,15 +21,15 @@ func (_m *mockCesRegistry) EXPECT() *mockCesRegistry_Expecter {
 }
 
 // BlueprintRegistry provides a mock function with given fields:
-func (_m *mockCesRegistry) BlueprintRegistry() configurationContext {
+func (_m *mockCesRegistry) BlueprintRegistry() registry.ConfigurationContext {
 	ret := _m.Called()
 
-	var r0 configurationContext
-	if rf, ok := ret.Get(0).(func() configurationContext); ok {
+	var r0 registry.ConfigurationContext
+	if rf, ok := ret.Get(0).(func() registry.ConfigurationContext); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(configurationContext)
+			r0 = ret.Get(0).(registry.ConfigurationContext)
 		}
 	}
 
@@ -53,26 +53,26 @@ func (_c *mockCesRegistry_BlueprintRegistry_Call) Run(run func()) *mockCesRegist
 	return _c
 }
 
-func (_c *mockCesRegistry_BlueprintRegistry_Call) Return(_a0 configurationContext) *mockCesRegistry_BlueprintRegistry_Call {
+func (_c *mockCesRegistry_BlueprintRegistry_Call) Return(_a0 registry.ConfigurationContext) *mockCesRegistry_BlueprintRegistry_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockCesRegistry_BlueprintRegistry_Call) RunAndReturn(run func() configurationContext) *mockCesRegistry_BlueprintRegistry_Call {
+func (_c *mockCesRegistry_BlueprintRegistry_Call) RunAndReturn(run func() registry.ConfigurationContext) *mockCesRegistry_BlueprintRegistry_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DoguConfig provides a mock function with given fields: dogu
-func (_m *mockCesRegistry) DoguConfig(dogu string) configurationContext {
+func (_m *mockCesRegistry) DoguConfig(dogu string) registry.ConfigurationContext {
 	ret := _m.Called(dogu)
 
-	var r0 configurationContext
-	if rf, ok := ret.Get(0).(func(string) configurationContext); ok {
+	var r0 registry.ConfigurationContext
+	if rf, ok := ret.Get(0).(func(string) registry.ConfigurationContext); ok {
 		r0 = rf(dogu)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(configurationContext)
+			r0 = ret.Get(0).(registry.ConfigurationContext)
 		}
 	}
 
@@ -97,12 +97,12 @@ func (_c *mockCesRegistry_DoguConfig_Call) Run(run func(dogu string)) *mockCesRe
 	return _c
 }
 
-func (_c *mockCesRegistry_DoguConfig_Call) Return(_a0 configurationContext) *mockCesRegistry_DoguConfig_Call {
+func (_c *mockCesRegistry_DoguConfig_Call) Return(_a0 registry.ConfigurationContext) *mockCesRegistry_DoguConfig_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockCesRegistry_DoguConfig_Call) RunAndReturn(run func(string) configurationContext) *mockCesRegistry_DoguConfig_Call {
+func (_c *mockCesRegistry_DoguConfig_Call) RunAndReturn(run func(string) registry.ConfigurationContext) *mockCesRegistry_DoguConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -202,15 +202,15 @@ func (_c *mockCesRegistry_GetNode_Call) RunAndReturn(run func() (registry.Node, 
 }
 
 // GlobalConfig provides a mock function with given fields:
-func (_m *mockCesRegistry) GlobalConfig() configurationContext {
+func (_m *mockCesRegistry) GlobalConfig() registry.ConfigurationContext {
 	ret := _m.Called()
 
-	var r0 configurationContext
-	if rf, ok := ret.Get(0).(func() configurationContext); ok {
+	var r0 registry.ConfigurationContext
+	if rf, ok := ret.Get(0).(func() registry.ConfigurationContext); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(configurationContext)
+			r0 = ret.Get(0).(registry.ConfigurationContext)
 		}
 	}
 
@@ -234,26 +234,26 @@ func (_c *mockCesRegistry_GlobalConfig_Call) Run(run func()) *mockCesRegistry_Gl
 	return _c
 }
 
-func (_c *mockCesRegistry_GlobalConfig_Call) Return(_a0 configurationContext) *mockCesRegistry_GlobalConfig_Call {
+func (_c *mockCesRegistry_GlobalConfig_Call) Return(_a0 registry.ConfigurationContext) *mockCesRegistry_GlobalConfig_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockCesRegistry_GlobalConfig_Call) RunAndReturn(run func() configurationContext) *mockCesRegistry_GlobalConfig_Call {
+func (_c *mockCesRegistry_GlobalConfig_Call) RunAndReturn(run func() registry.ConfigurationContext) *mockCesRegistry_GlobalConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // HostConfig provides a mock function with given fields: hostService
-func (_m *mockCesRegistry) HostConfig(hostService string) configurationContext {
+func (_m *mockCesRegistry) HostConfig(hostService string) registry.ConfigurationContext {
 	ret := _m.Called(hostService)
 
-	var r0 configurationContext
-	if rf, ok := ret.Get(0).(func(string) configurationContext); ok {
+	var r0 registry.ConfigurationContext
+	if rf, ok := ret.Get(0).(func(string) registry.ConfigurationContext); ok {
 		r0 = rf(hostService)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(configurationContext)
+			r0 = ret.Get(0).(registry.ConfigurationContext)
 		}
 	}
 
@@ -278,26 +278,26 @@ func (_c *mockCesRegistry_HostConfig_Call) Run(run func(hostService string)) *mo
 	return _c
 }
 
-func (_c *mockCesRegistry_HostConfig_Call) Return(_a0 configurationContext) *mockCesRegistry_HostConfig_Call {
+func (_c *mockCesRegistry_HostConfig_Call) Return(_a0 registry.ConfigurationContext) *mockCesRegistry_HostConfig_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockCesRegistry_HostConfig_Call) RunAndReturn(run func(string) configurationContext) *mockCesRegistry_HostConfig_Call {
+func (_c *mockCesRegistry_HostConfig_Call) RunAndReturn(run func(string) registry.ConfigurationContext) *mockCesRegistry_HostConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RootConfig provides a mock function with given fields:
-func (_m *mockCesRegistry) RootConfig() configurationContext {
+func (_m *mockCesRegistry) RootConfig() registry.WatchConfigurationContext {
 	ret := _m.Called()
 
-	var r0 configurationContext
-	if rf, ok := ret.Get(0).(func() configurationContext); ok {
+	var r0 registry.WatchConfigurationContext
+	if rf, ok := ret.Get(0).(func() registry.WatchConfigurationContext); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(configurationContext)
+			r0 = ret.Get(0).(registry.WatchConfigurationContext)
 		}
 	}
 
@@ -321,12 +321,12 @@ func (_c *mockCesRegistry_RootConfig_Call) Run(run func()) *mockCesRegistry_Root
 	return _c
 }
 
-func (_c *mockCesRegistry_RootConfig_Call) Return(_a0 configurationContext) *mockCesRegistry_RootConfig_Call {
+func (_c *mockCesRegistry_RootConfig_Call) Return(_a0 registry.WatchConfigurationContext) *mockCesRegistry_RootConfig_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockCesRegistry_RootConfig_Call) RunAndReturn(run func() configurationContext) *mockCesRegistry_RootConfig_Call {
+func (_c *mockCesRegistry_RootConfig_Call) RunAndReturn(run func() registry.WatchConfigurationContext) *mockCesRegistry_RootConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
