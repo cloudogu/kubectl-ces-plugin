@@ -52,3 +52,7 @@ type doguRegistry interface {
 type cesRegistry interface {
 	registry.Registry
 }
+
+type delegator interface {
+	Delegate(doguConfigCall func(dogu *core.Dogu, editor doguConfigurationEditor) error) error
+}

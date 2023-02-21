@@ -50,7 +50,7 @@ func createPortForwardAndRegistry(namespace string, restConfig *rest.Config) (po
 }
 
 type doguConfigService struct {
-	delegator *doguConfigurationDelegator
+	delegator delegator
 }
 
 func (s doguConfigService) EditAllInteractive() error {
