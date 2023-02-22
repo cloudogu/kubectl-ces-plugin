@@ -42,13 +42,14 @@ func listAllForDoguCmd() *cobra.Command {
 		Aliases: []string{"l", "ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
-			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
 
-			restConfig, namespace2, err := getKubeConfig(k8sArgs)
+			restConfig, namespace, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
+
+			fmt.Println(namespace)
 
 			configService, err := doguConfigServiceFactory(doguName, namespace, restConfig)
 			if err != nil {
@@ -79,9 +80,8 @@ func getCmd() *cobra.Command {
 			configKey := args[0]
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
-			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
-			restConfig, _, err := getKubeConfig(k8sArgs)
+			restConfig, namespace, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
@@ -114,9 +114,8 @@ func editCmd() *cobra.Command {
 			configValue := args[1]
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
-			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
-			restConfig, _, err := getKubeConfig(k8sArgs)
+			restConfig, namespace, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
@@ -147,9 +146,8 @@ func deleteCmd() *cobra.Command {
 			configKey := args[0]
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
-			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
-			restConfig, _, err := getKubeConfig(k8sArgs)
+			restConfig, namespace, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
