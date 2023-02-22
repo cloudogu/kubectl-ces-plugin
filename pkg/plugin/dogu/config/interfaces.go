@@ -15,11 +15,11 @@ type portForwarder interface {
 // doguConfigurationEditor is able to edit registry configuration values of a dogu.
 type doguConfigurationEditor interface {
 	// EditConfiguration prints registry keys to writer and read values from reader.
-	EditConfiguration(fields []core.ConfigurationField) error
+	EditConfiguration(fields []core.ConfigurationField, deleteOnEmpty bool) error
 	// GetCurrentValue returns a value for a given ConfigurationField if it exists, otherwise it returns an error.
 	GetCurrentValue(field core.ConfigurationField) (string, error)
 	// SetFieldToValue set the Field as value into the editor.
-	SetFieldToValue(field core.ConfigurationField, value string) error
+	SetFieldToValue(field core.ConfigurationField, value string, deleteOnEmpty bool) error
 	// DeleteField deletes the field.
 	DeleteField(field core.ConfigurationField) error
 }

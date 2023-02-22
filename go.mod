@@ -3,13 +3,13 @@ module github.com/cloudogu/kubectl-ces-plugin
 go 1.18
 
 require (
-	github.com/cloudogu/cesapp-lib v0.0.0-20230221135824-1b8f643f9e01
+	github.com/cloudogu/cesapp-lib v0.0.0-20230222095820-819178066686
 	github.com/fatih/color v1.14.1
 	github.com/phayes/freeport v0.0.0-20171002181615-b8543db493a5
 	github.com/spf13/cobra v1.6.1
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.1
-	github.com/tj/go-spin v1.1.0
 	k8s.io/apimachinery v0.26.1
 	k8s.io/cli-runtime v0.26.1
 	k8s.io/client-go v0.26.1
@@ -60,7 +60,6 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect

@@ -2,10 +2,8 @@ package config
 
 // doguConfigService provides functionality to view and edit dogu configurations in etcd.
 type doguConfigService interface {
-	// EditAllInteractive opens an interactive dialogue to edit all keys of a dogu.
-	EditAllInteractive() error
 	// Edit replaces the current value of the key with the given value.
-	Edit(registryKey string, registryValue string) error
+	Edit(registryKey string, registryValue string, deleteOnEmpty bool) error
 	// Delete deletes the given key and its value.
 	Delete(registryKey string) error
 	// GetAllForDogu returns all keys and their values.

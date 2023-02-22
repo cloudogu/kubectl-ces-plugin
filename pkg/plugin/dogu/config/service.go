@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/phayes/freeport"
 	"k8s.io/apimachinery/pkg/types"
@@ -53,21 +54,27 @@ type doguConfigService struct {
 	delegator delegator
 }
 
-func (s doguConfigService) EditAllInteractive() error {
+func (s doguConfigService) Edit(registryKey string, registryValue string, deleteOnEmpty bool) error {
 	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
-		return editor.EditConfiguration(dogu.Configuration)
-	})
-}
+		if registryValue == "" {
+			// edit interactive
+			matchingFields := matchConfigurationFields(dogu, registryKey)
+			if matchingFields == nil || len(matchingFields) == 0 {
+				logger.NewLogger().Info("dogu '%s' has no matching configuration fields for key '%s'", dogu.GetSimpleName(), registryKey)
+				return nil
+			}
 
-func (s doguConfigService) Edit(registryKey string, registryValue string) error {
-	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
-		found, field := configurationFieldByKey(dogu, registryKey)
-		if !found {
-			logger.NewLogger().Info("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
-			return nil
+			return editor.EditConfiguration(matchingFields, deleteOnEmpty)
+		} else {
+			// set directly
+			found, field := configurationFieldByKey(dogu, registryKey)
+			if !found {
+				logger.NewLogger().Info("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
+				return nil
+			}
+
+			return editor.SetFieldToValue(*field, registryValue, false)
 		}
-
-		return editor.SetFieldToValue(*field, registryValue)
 	})
 }
 
@@ -104,6 +111,7 @@ func (s doguConfigService) GetAllForDogu() (map[string]string, error) {
 	return entireDoguConfig, nil
 }
 
+// GetValue returns the value of the provided registry key for the dogu if the key exists.
 func (s doguConfigService) GetValue(registryKey string) (string, error) {
 	var registryValue string
 	err := s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
@@ -136,4 +144,21 @@ func configurationFieldByKey(dogu *core.Dogu, key string) (found bool, configFie
 	}
 
 	return false, nil
+}
+
+// matchConfigurationFields returns all configuration fields of a dogu who's names start with the provided key.
+// An empty key returns all fields.
+func matchConfigurationFields(dogu *core.Dogu, key string) []core.ConfigurationField {
+	if key == "" {
+		return dogu.Configuration
+	}
+
+	var matchingFields []core.ConfigurationField
+	for _, field := range dogu.Configuration {
+		if strings.HasPrefix(field.Name, key) {
+			matchingFields = append(matchingFields, field)
+		}
+	}
+
+	return matchingFields
 }
