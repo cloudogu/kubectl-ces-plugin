@@ -40,12 +40,12 @@ func listAllForDoguCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"l", "ls"},
-		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
 			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
-			restConfig, err := createRestConfig(k8sArgs)
+
+			restConfig, namespace2, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
@@ -74,14 +74,14 @@ func getCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "get <configKey>",
 		Aliases: []string{"g"},
-		Args:    cobra.ExactArgs(2),
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configKey := args[1]
+			configKey := args[0]
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
 			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
-			restConfig, err := createRestConfig(k8sArgs)
+			restConfig, _, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
@@ -108,15 +108,15 @@ func editCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "edit <configKey> <configValue>",
 		Aliases: []string{"e", "set"},
-		Args:    cobra.ExactArgs(3),
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configKey := args[1]
-			configValue := args[2]
+			configKey := args[0]
+			configValue := args[1]
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
 			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
-			restConfig, err := createRestConfig(k8sArgs)
+			restConfig, _, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
@@ -142,14 +142,14 @@ func deleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete <configKey>",
 		Aliases: []string{"d", "remove", "rm"},
-		Args:    cobra.ExactArgs(2),
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configKey := args[1]
+			configKey := args[0]
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
 			namespace := "test-namespace"
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
-			restConfig, err := createRestConfig(k8sArgs)
+			restConfig, _, err := getKubeConfig(k8sArgs)
 			if err != nil {
 				return err
 			}
@@ -171,12 +171,19 @@ func deleteCmd() *cobra.Command {
 	return cmd
 }
 
-func createRestConfig(k8sArgs interface{}) (*rest.Config, error) {
-	restConfig, err := (k8sArgs).(*genericclioptions.ConfigFlags).ToRESTConfig()
+func getKubeConfig(k8sArgs interface{}) (*rest.Config, string, error) {
+	cfg := (k8sArgs).(*genericclioptions.ConfigFlags)
+	restConfig, err := cfg.ToRESTConfig()
 	if err != nil {
-		return nil, fmt.Errorf("could not create rest config: %w", err)
+		return nil, "", fmt.Errorf("could not create rest config: %w", err)
 	}
-	return restConfig, nil
+
+	namespace := ""
+	if cfg.Namespace != nil {
+		namespace = *cfg.Namespace
+	}
+
+	return restConfig, namespace, nil
 }
 
 func getTransportArgAsString(paramName string) string {

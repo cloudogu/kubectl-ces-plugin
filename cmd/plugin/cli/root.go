@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
@@ -13,11 +14,16 @@ import (
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
 )
 
-var (
-	KubernetesConfigFlags *genericclioptions.ConfigFlags
-)
-
 func RootCmd() *cobra.Command {
+	streams := genericclioptions.IOStreams{
+		In:     os.Stdin,
+		Out:    os.Stdout,
+		ErrOut: os.Stderr,
+	}
+	flags := pflag.NewFlagSet("kubectl", pflag.ExitOnError)
+	pflag.CommandLine = flags
+	KubernetesConfigFlags := genericclioptions.NewConfigFlags(true)
+	kubeResouceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
 
 	cmd := &cobra.Command{
 		Use:           "kubectl ces",
@@ -27,6 +33,7 @@ func RootCmd() *cobra.Command {
 		SilenceUsage:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := viper.BindPFlags(cmd.Flags())
+			cmd.SetErr(streams.ErrOut)
 			if err != nil {
 				return err
 			}
@@ -35,9 +42,9 @@ func RootCmd() *cobra.Command {
 	}
 
 	cobra.OnInitialize(initConfig)
-
-	KubernetesConfigFlags = genericclioptions.NewConfigFlags(false)
-	KubernetesConfigFlags.AddFlags(cmd.Flags())
+	flags.AddFlagSet(cmd.PersistentFlags())
+	KubernetesConfigFlags.AddFlags(flags)
+	kubeResouceBuilderFlags.AddFlags(flags)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.Set(util.CliTransportParamK8sArgs, KubernetesConfigFlags)
