@@ -62,13 +62,13 @@ func (_c *mockDoguConfigurationEditor_DeleteField_Call) RunAndReturn(run func(co
 	return _c
 }
 
-// EditConfiguration provides a mock function with given fields: fields
-func (_m *mockDoguConfigurationEditor) EditConfiguration(fields []core.ConfigurationField) error {
-	ret := _m.Called(fields)
+// EditConfiguration provides a mock function with given fields: fields, deleteOnEmpty
+func (_m *mockDoguConfigurationEditor) EditConfiguration(fields []core.ConfigurationField, deleteOnEmpty bool) error {
+	ret := _m.Called(fields, deleteOnEmpty)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]core.ConfigurationField) error); ok {
-		r0 = rf(fields)
+	if rf, ok := ret.Get(0).(func([]core.ConfigurationField, bool) error); ok {
+		r0 = rf(fields, deleteOnEmpty)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -83,13 +83,14 @@ type mockDoguConfigurationEditor_EditConfiguration_Call struct {
 
 // EditConfiguration is a helper method to define mock.On call
 //  - fields []core.ConfigurationField
-func (_e *mockDoguConfigurationEditor_Expecter) EditConfiguration(fields interface{}) *mockDoguConfigurationEditor_EditConfiguration_Call {
-	return &mockDoguConfigurationEditor_EditConfiguration_Call{Call: _e.mock.On("EditConfiguration", fields)}
+//  - deleteOnEmpty bool
+func (_e *mockDoguConfigurationEditor_Expecter) EditConfiguration(fields interface{}, deleteOnEmpty interface{}) *mockDoguConfigurationEditor_EditConfiguration_Call {
+	return &mockDoguConfigurationEditor_EditConfiguration_Call{Call: _e.mock.On("EditConfiguration", fields, deleteOnEmpty)}
 }
 
-func (_c *mockDoguConfigurationEditor_EditConfiguration_Call) Run(run func(fields []core.ConfigurationField)) *mockDoguConfigurationEditor_EditConfiguration_Call {
+func (_c *mockDoguConfigurationEditor_EditConfiguration_Call) Run(run func(fields []core.ConfigurationField, deleteOnEmpty bool)) *mockDoguConfigurationEditor_EditConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]core.ConfigurationField))
+		run(args[0].([]core.ConfigurationField), args[1].(bool))
 	})
 	return _c
 }
@@ -99,7 +100,7 @@ func (_c *mockDoguConfigurationEditor_EditConfiguration_Call) Return(_a0 error) 
 	return _c
 }
 
-func (_c *mockDoguConfigurationEditor_EditConfiguration_Call) RunAndReturn(run func([]core.ConfigurationField) error) *mockDoguConfigurationEditor_EditConfiguration_Call {
+func (_c *mockDoguConfigurationEditor_EditConfiguration_Call) RunAndReturn(run func([]core.ConfigurationField, bool) error) *mockDoguConfigurationEditor_EditConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -156,13 +157,13 @@ func (_c *mockDoguConfigurationEditor_GetCurrentValue_Call) RunAndReturn(run fun
 	return _c
 }
 
-// SetFieldToValue provides a mock function with given fields: field, value
-func (_m *mockDoguConfigurationEditor) SetFieldToValue(field core.ConfigurationField, value string) error {
-	ret := _m.Called(field, value)
+// SetFieldToValue provides a mock function with given fields: field, value, deleteOnEmpty
+func (_m *mockDoguConfigurationEditor) SetFieldToValue(field core.ConfigurationField, value string, deleteOnEmpty bool) error {
+	ret := _m.Called(field, value, deleteOnEmpty)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(core.ConfigurationField, string) error); ok {
-		r0 = rf(field, value)
+	if rf, ok := ret.Get(0).(func(core.ConfigurationField, string, bool) error); ok {
+		r0 = rf(field, value, deleteOnEmpty)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -178,13 +179,14 @@ type mockDoguConfigurationEditor_SetFieldToValue_Call struct {
 // SetFieldToValue is a helper method to define mock.On call
 //  - field core.ConfigurationField
 //  - value string
-func (_e *mockDoguConfigurationEditor_Expecter) SetFieldToValue(field interface{}, value interface{}) *mockDoguConfigurationEditor_SetFieldToValue_Call {
-	return &mockDoguConfigurationEditor_SetFieldToValue_Call{Call: _e.mock.On("SetFieldToValue", field, value)}
+//  - deleteOnEmpty bool
+func (_e *mockDoguConfigurationEditor_Expecter) SetFieldToValue(field interface{}, value interface{}, deleteOnEmpty interface{}) *mockDoguConfigurationEditor_SetFieldToValue_Call {
+	return &mockDoguConfigurationEditor_SetFieldToValue_Call{Call: _e.mock.On("SetFieldToValue", field, value, deleteOnEmpty)}
 }
 
-func (_c *mockDoguConfigurationEditor_SetFieldToValue_Call) Run(run func(field core.ConfigurationField, value string)) *mockDoguConfigurationEditor_SetFieldToValue_Call {
+func (_c *mockDoguConfigurationEditor_SetFieldToValue_Call) Run(run func(field core.ConfigurationField, value string, deleteOnEmpty bool)) *mockDoguConfigurationEditor_SetFieldToValue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(core.ConfigurationField), args[1].(string))
+		run(args[0].(core.ConfigurationField), args[1].(string), args[2].(bool))
 	})
 	return _c
 }
@@ -194,7 +196,7 @@ func (_c *mockDoguConfigurationEditor_SetFieldToValue_Call) Return(_a0 error) *m
 	return _c
 }
 
-func (_c *mockDoguConfigurationEditor_SetFieldToValue_Call) RunAndReturn(run func(core.ConfigurationField, string) error) *mockDoguConfigurationEditor_SetFieldToValue_Call {
+func (_c *mockDoguConfigurationEditor_SetFieldToValue_Call) RunAndReturn(run func(core.ConfigurationField, string, bool) error) *mockDoguConfigurationEditor_SetFieldToValue_Call {
 	_c.Call.Return(run)
 	return _c
 }

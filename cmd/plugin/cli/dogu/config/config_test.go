@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
@@ -236,7 +237,8 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		configKey := "redmineKey"
 		configValue := "redmineValue"
-		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue).Return(nil).Once()
+		deleteOnEdit := false
+		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue, deleteOnEdit).Return(nil).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
@@ -263,7 +265,8 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		configKey := "redmineKey"
 		configValue := "redmineValue"
 		expectedError := errors.New("configService error")
-		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue).Return(expectedError).Once()
+		deleteOnEdit := false
+		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue, deleteOnEdit).Return(expectedError).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
@@ -312,6 +315,7 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		configCmd := Cmd()
 		configCmd.SetOut(outBuf)
 		configCmd.SetErr(errBuf)
+		viperInjectKubeEnvironment()
 
 		// when
 		configCmd.SetArgs([]string{"edit"})
@@ -324,6 +328,13 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		s.Contains(errBuf.String(), err.Error(), "should contain error output")
 		s.EqualError(err, "accepts 3 arg(s), received 0")
 	})
+}
+
+func viperInjectKubeEnvironment() {
+	k8sFlags := &genericclioptions.ConfigFlags{}
+	validKubeConfig := "./testdata/kubeConfig.valid"
+	k8sFlags.KubeConfig = &validKubeConfig
+	viper.GetViper().Set(util.CliTransportParamK8sArgs, k8sFlags)
 }
 
 func (s *DoguConfigCLITestSuite) Test_deleteCmd() {

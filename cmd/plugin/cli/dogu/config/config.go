@@ -16,6 +16,15 @@ const (
 	errMsgDoguConfigServiceCreate = "cannot create config service in get dogu config command: %w"
 )
 
+const (
+	flagKeyDeleteOnEmptyLong  = "delete-on-empty"
+	flagKeyDeleteOnEmptyShort = "d"
+)
+
+var (
+	flagValueDeleteOnEmpty bool
+)
+
 var doguConfigServiceFactory = func(doguName, k8sNamespace string, restConfig *rest.Config) (doguConfigService, error) {
 	return config.New(doguName, k8sNamespace, restConfig)
 }
@@ -108,10 +117,20 @@ func editCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "edit <configKey> <configValue>",
 		Aliases: []string{"e", "set"},
-		Args:    cobra.ExactArgs(2),
+		Args:    cobra.RangeArgs(0, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configKey := args[0]
-			configValue := args[1]
+			cmd.Flags().BoolVarP(&flagValueDeleteOnEmpty, flagKeyDeleteOnEmptyLong, flagKeyDeleteOnEmptyShort, false,
+				"delete key if no value was provided during editing")
+			configKey := ""
+			configValue := ""
+
+			switch len(args) {
+			case 2:
+				configKey = args[0]
+				configValue = args[1]
+			case 1:
+				configValue = args[0]
+			}
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
 			k8sArgs := getTransportArg(util.CliTransportParamK8sArgs)
@@ -125,7 +144,7 @@ func editCmd() *cobra.Command {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
 
-			err = configService.Edit(configKey, configValue)
+			err = configService.Edit(configKey, configValue, flagValueDeleteOnEmpty)
 			if err != nil {
 				return fmt.Errorf("cannot set config key '%s' in edit dogu config command: %w", configKey, err)
 			}
