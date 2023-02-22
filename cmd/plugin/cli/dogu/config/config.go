@@ -65,7 +65,7 @@ func listAllForDoguCmd() *cobra.Command {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
 
-			configEntries, err := configService.GetAllForDogu()
+			configEntries, err := configService.List()
 			if err != nil {
 				return fmt.Errorf("cannot list config in list dogu config command: %w", err)
 			}
@@ -117,19 +117,15 @@ func editCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "edit <configKey> <configValue>",
 		Aliases: []string{"e", "set"},
-		Args:    cobra.RangeArgs(0, 2),
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Flags().BoolVarP(&flagValueDeleteOnEmpty, flagKeyDeleteOnEmptyLong, flagKeyDeleteOnEmptyShort, false,
 				"delete key if no value was provided during editing")
 			configKey := ""
-			configValue := ""
 
 			switch len(args) {
-			case 2:
-				configKey = args[0]
-				configValue = args[1]
 			case 1:
-				configValue = args[0]
+				configKey = args[0]
 			}
 
 			doguName := getTransportArgAsString(util.CliTransportArgConfigDoguDoguName)
@@ -144,7 +140,7 @@ func editCmd() *cobra.Command {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
 
-			err = configService.Edit(configKey, configValue, flagValueDeleteOnEmpty)
+			err = configService.Edit(configKey, flagValueDeleteOnEmpty)
 			if err != nil {
 				return fmt.Errorf("cannot set config key '%s' in edit dogu config command: %w", configKey, err)
 			}

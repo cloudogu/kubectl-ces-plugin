@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/registry"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 )
 
@@ -54,44 +53,62 @@ type doguConfigService struct {
 	delegator delegator
 }
 
-func (s doguConfigService) Edit(registryKey string, registryValue string, deleteOnEmpty bool) error {
+// Edit opens an interactive dialogue to edit the value of the given key.
+func (s doguConfigService) Edit(registryKey string, deleteOnEmpty bool) error {
 	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
-		if registryValue == "" {
-			// edit interactive
-			matchingFields := matchConfigurationFields(dogu, registryKey)
-			if matchingFields == nil || len(matchingFields) == 0 {
-				logger.NewLogger().Info("dogu '%s' has no matching configuration fields for key '%s'", dogu.GetSimpleName(), registryKey)
-				return nil
-			}
-
-			return editor.EditConfiguration(matchingFields, deleteOnEmpty)
-		} else {
-			// set directly
-			found, field := configurationFieldByKey(dogu, registryKey)
-			if !found {
-				logger.NewLogger().Info("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
-				return nil
-			}
-
-			return editor.SetFieldToValue(*field, registryValue, false)
+		matchingFields := matchConfigurationFields(dogu, registryKey)
+		if matchingFields == nil || len(matchingFields) == 0 {
+			return fmt.Errorf("dogu '%s' has no matching configuration fields for key '%s'", dogu.GetSimpleName(), registryKey)
 		}
+
+		return editor.EditConfiguration(matchingFields, deleteOnEmpty)
 	})
 }
 
+// matchConfigurationFields returns all configuration fields of a dogu who's names start with the provided key.
+// An empty key returns all fields.
+func matchConfigurationFields(dogu *core.Dogu, key string) []core.ConfigurationField {
+	if key == "" {
+		return dogu.Configuration
+	}
+
+	var matchingFields []core.ConfigurationField
+	for _, field := range dogu.Configuration {
+		if strings.HasPrefix(field.Name, key) {
+			matchingFields = append(matchingFields, field)
+		}
+	}
+
+	return matchingFields
+}
+
+// Set replaces the current value of the key with the given value.
+func (s doguConfigService) Set(registryKey string, registryValue string) error {
+	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
+		found, field := configurationFieldByKey(dogu, registryKey)
+		if !found {
+			return fmt.Errorf("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
+		}
+
+		return editor.SetFieldToValue(*field, registryValue, false)
+	})
+}
+
+// Delete deletes the given key and its value.
 func (s doguConfigService) Delete(registryKey string) error {
 	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		found, field := configurationFieldByKey(dogu, registryKey)
 		if !found {
-			logger.NewLogger().Info("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
-			return nil
+			return fmt.Errorf("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
 		}
 
 		return editor.DeleteField(*field)
 	})
 }
 
-func (s doguConfigService) GetAllForDogu() (map[string]string, error) {
-	var entireDoguConfig map[string]string
+// List returns all keys and their values.
+func (s doguConfigService) List() (map[string]string, error) {
+	entireDoguConfig := map[string]string{}
 	err := s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		for _, field := range dogu.Configuration {
 			registryValue, err := editor.GetCurrentValue(field)
@@ -117,8 +134,7 @@ func (s doguConfigService) GetValue(registryKey string) (string, error) {
 	err := s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		found, field := configurationFieldByKey(dogu, registryKey)
 		if !found {
-			logger.NewLogger().Info("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
-			return nil
+			return fmt.Errorf("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
 		}
 
 		var err error
@@ -144,21 +160,4 @@ func configurationFieldByKey(dogu *core.Dogu, key string) (found bool, configFie
 	}
 
 	return false, nil
-}
-
-// matchConfigurationFields returns all configuration fields of a dogu who's names start with the provided key.
-// An empty key returns all fields.
-func matchConfigurationFields(dogu *core.Dogu, key string) []core.ConfigurationField {
-	if key == "" {
-		return dogu.Configuration
-	}
-
-	var matchingFields []core.ConfigurationField
-	for _, field := range dogu.Configuration {
-		if strings.HasPrefix(field.Name, key) {
-			matchingFields = append(matchingFields, field)
-		}
-	}
-
-	return matchingFields
 }

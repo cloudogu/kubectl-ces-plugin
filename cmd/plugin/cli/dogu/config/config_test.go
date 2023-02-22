@@ -46,7 +46,7 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 		returnedConfig := make(map[string]string)
 		returnedConfig["testKey1"] = "testValue1"
 		returnedConfig["testKey2"] = "testValue2"
-		doguConfigServiceFactoryMock.EXPECT().GetAllForDogu().Return(returnedConfig, nil).Once()
+		doguConfigServiceFactoryMock.EXPECT().List().Return(returnedConfig, nil).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
@@ -72,7 +72,7 @@ func (s *DoguConfigCLITestSuite) Test_getAllForDoguCmd() {
 
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		expectedError := errors.New("configService error")
-		doguConfigServiceFactoryMock.EXPECT().GetAllForDogu().Return(nil, expectedError).Once()
+		doguConfigServiceFactoryMock.EXPECT().List().Return(nil, expectedError).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
@@ -235,14 +235,13 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
-		configKey := "redmineKey"
-		configValue := "redmineValue"
-		deleteOnEdit := false
-		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue, deleteOnEdit).Return(nil).Once()
+		const configKey = "redmineKey"
+		const deleteOnEdit = false
+		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, deleteOnEdit).Return(nil).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
+		configCmd.SetArgs([]string{"edit", doguName, configKey})
 		err := configCmd.Execute()
 
 		// then
@@ -262,15 +261,14 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		viper.GetViper().Set(util.CliTransportArgConfigDoguDoguName, doguName)
 
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
-		configKey := "redmineKey"
-		configValue := "redmineValue"
+		const configKey = "redmineKey"
 		expectedError := errors.New("configService error")
-		deleteOnEdit := false
-		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, configValue, deleteOnEdit).Return(expectedError).Once()
+		const deleteOnEdit = false
+		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, deleteOnEdit).Return(expectedError).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		configCmd.SetArgs([]string{"edit", doguName, configKey, configValue})
+		configCmd.SetArgs([]string{"edit", doguName, configKey})
 		err := configCmd.Execute()
 
 		// then
@@ -338,6 +336,7 @@ func viperInjectKubeEnvironment() {
 }
 
 func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
+	viper.GetViper().Set(util.CliTransportParamK8sArgs, &genericclioptions.ConfigFlags{})
 	s.Run("should get config value", func() {
 		// given
 		outBuf := new(bytes.Buffer)
@@ -354,7 +353,7 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		configCmd.SetArgs([]string{"delete", doguName, configKey})
+		configCmd.SetArgs([]string{"delete", configKey})
 		err := configCmd.Execute()
 
 		// then
