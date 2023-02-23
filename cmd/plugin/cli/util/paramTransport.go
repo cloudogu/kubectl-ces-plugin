@@ -2,8 +2,6 @@ package util
 
 // These constants identify arguments passed from the viper CLI to any service in order to avoid parameter pollution.
 const (
-	// CliTransportArgConfigDoguDoguName passes the dogu name for the call `config dogu <doguName>.
-	CliTransportArgConfigDoguDoguName = "cesConfigDoguDoguName"
 	// CliTransportParamK8sArgs passes K8s kube config infos globally.
 	CliTransportParamK8sArgs = "globalK8sArgs"
 )

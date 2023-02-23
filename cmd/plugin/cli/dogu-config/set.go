@@ -1,0 +1,46 @@
+package dogu_config
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
+
+func setCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "set <dogu> <config-key> <config-value>",
+		Aliases: []string{"s"},
+		Args:    cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			doguName := ""
+			configKey := ""
+			configValue := ""
+
+			switch len(args) {
+			case 1:
+				doguName = args[0]
+			case 2:
+				doguName = args[0]
+				configKey = args[1]
+			case 3:
+				doguName = args[0]
+				configKey = args[1]
+				configValue = args[2]
+			}
+
+			configService, err := doguConfigServiceFactory(doguName)
+			if err != nil {
+				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
+			}
+
+			err = configService.Set(configKey, configValue)
+			if err != nil {
+				return fmt.Errorf("cannot set config key '%s': %w", configKey, err)
+			}
+
+			return nil
+		},
+	}
+
+	return cmd
+}

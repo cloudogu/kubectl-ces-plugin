@@ -1,7 +1,8 @@
 # Developing kubectl-ces-plugin
 
-## Encourage Command Structure
+## Encouraged Command Structure
 
+```shell
 kubectl ces "group" "verb" "noun" "adjective"
 kubectl ces dogu-config edit redmine
 kubectl ces dogu-config delete redmine <key>
@@ -21,3 +22,4 @@ kubectl ces backup delete "15d8eb48" --force -y --dont-ask-again
 kubectl ces backup list
 kubectl ces backup restore "15d8eb48" -y
 kubectl ces instance register
+```

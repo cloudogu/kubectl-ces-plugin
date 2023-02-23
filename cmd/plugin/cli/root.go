@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
-	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu"
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu-config"
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
 )
 
@@ -49,7 +49,7 @@ func RootCmd() *cobra.Command {
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.Set(util.CliTransportParamK8sArgs, KubernetesConfigFlags)
 
-	cmd.AddCommand(dogu.Cmd())
+	cmd.AddCommand(dogu_config.Cmd())
 
 	return cmd
 }

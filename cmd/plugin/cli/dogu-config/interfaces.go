@@ -1,4 +1,4 @@
-package config
+package dogu_config
 
 // doguConfigService provides functionality to view and edit dogu configurations in etcd.
 type doguConfigService interface {
