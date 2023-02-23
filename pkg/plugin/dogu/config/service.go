@@ -35,7 +35,7 @@ func createPortForwardAndRegistry(namespace string, restConfig *rest.Config) (po
 		return nil, nil, err
 	}
 
-	forward := portforward.New(restConfig, portforward.ServiceType, types.NamespacedName{Namespace: namespace, Name: "etcd"}, freePort, 4001)
+	forward := portforward.New(restConfig, types.NamespacedName{Namespace: namespace, Name: "etcd-0"}, freePort, 4001)
 
 	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
 	reg, err := registry.New(core.Registry{
