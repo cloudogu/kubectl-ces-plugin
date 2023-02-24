@@ -12,8 +12,14 @@ import (
 	"k8s.io/client-go/transport/spdy"
 )
 
+// PortForwarder provides functionality to create a port-forward.
+type PortForwarder interface {
+	// ExecuteWithPortForward wraps the given function into a port-forward.
+	ExecuteWithPortForward(fn func() error) error
+}
+
 // New creates a new port forwarder.
-func New(restConfig *rest.Config, pod types.NamespacedName, localPort int, clusterPort int) *kubernetesPortForwarder {
+func New(restConfig *rest.Config, pod types.NamespacedName, localPort, clusterPort int) PortForwarder {
 	return &kubernetesPortForwarder{
 		restConfig:  restConfig,
 		pod:         pod,

@@ -13,6 +13,12 @@ import (
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 )
 
+var (
+	freePort         = freeport.GetFreePort
+	newPortForwarder = portforward.New
+	newRegistry      = registry.New
+)
+
 func New(doguName, namespace string, restConfig *rest.Config) (*doguConfigService, error) {
 	forwarder, reg, err := createPortForwardAndRegistry(namespace, restConfig)
 	if err != nil {
@@ -30,15 +36,15 @@ func New(doguName, namespace string, restConfig *rest.Config) (*doguConfigServic
 }
 
 func createPortForwardAndRegistry(namespace string, restConfig *rest.Config) (portForwarder, cesRegistry, error) {
-	freePort, err := freeport.GetFreePort()
+	freePort, err := freePort()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	forward := portforward.New(restConfig, types.NamespacedName{Namespace: namespace, Name: "etcd-0"}, freePort, 2379)
+	forward := newPortForwarder(restConfig, types.NamespacedName{Namespace: namespace, Name: "etcd-0"}, freePort, 2379)
 
 	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
-	reg, err := registry.New(core.Registry{
+	reg, err := newRegistry(core.Registry{
 		Type:      "etcd",
 		Endpoints: []string{endpoint},
 	})

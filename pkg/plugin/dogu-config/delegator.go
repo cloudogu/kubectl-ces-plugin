@@ -17,7 +17,7 @@ type doguConfigurationDelegator struct {
 	editor    doguConfigurationEditor
 }
 
-func newDelegator(doguName string, forwarder portForwarder, reg cesRegistry) (*doguConfigurationDelegator, error) {
+var newDelegator = func(doguName string, forwarder portForwarder, reg cesRegistry) (delegator, error) {
 	var editor doguConfigurationEditor
 	err := forwarder.ExecuteWithPortForward(func() error {
 
