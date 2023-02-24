@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
@@ -14,10 +13,10 @@ import (
 )
 
 // New creates a new port forwarder.
-func New(restConfig *rest.Config, name types.NamespacedName, localPort int, clusterPort int) *kubernetesPortForwarder {
+func New(restConfig *rest.Config, pod types.NamespacedName, localPort int, clusterPort int) *kubernetesPortForwarder {
 	return &kubernetesPortForwarder{
 		restConfig:  restConfig,
-		name:        name,
+		pod:         pod,
 		localPort:   localPort,
 		clusterPort: clusterPort,
 	}
@@ -27,8 +26,8 @@ func New(restConfig *rest.Config, name types.NamespacedName, localPort int, clus
 type kubernetesPortForwarder struct {
 	// restConfig is the kubernetes config
 	restConfig *rest.Config
-	// name references the selected resource for this port forwarding
-	name types.NamespacedName
+	// pod references the selected pod for this port forwarding
+	pod types.NamespacedName
 	// localPort is the local port that will be selected to expose the clusterPort
 	localPort int
 	// clusterPort is the target port for the pod
@@ -37,16 +36,19 @@ type kubernetesPortForwarder struct {
 
 // ExecuteWithPortForward establishes a port-forward until the given function returns.
 func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) error {
-	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward",
-		kpf.name.Namespace, kpf.name.Name)
-	hostIP := strings.TrimPrefix(kpf.restConfig.Host, "https://")
+	apiAddress := fmt.Sprintf("%s/api/v1/namespaces/%s/pods/%s/portforward",
+		kpf.restConfig.Host, kpf.pod.Namespace, kpf.pod.Name)
+	apiUrl, err := url.Parse(apiAddress)
+	if err != nil {
+		return err
+	}
 
 	transport, upgrader, err := spdy.RoundTripperFor(kpf.restConfig)
 	if err != nil {
 		return err
 	}
 
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, &url.URL{Scheme: "https", Path: path, Host: hostIP})
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, apiUrl)
 
 	stopCh := make(chan struct{})
 	defer close(stopCh)
