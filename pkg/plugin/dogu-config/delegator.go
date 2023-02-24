@@ -1,4 +1,4 @@
-package config
+package dogu_config
 
 import (
 	"fmt"
@@ -7,14 +7,13 @@ import (
 
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/doguConf"
-	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/keys"
 )
 
 type doguConfigurationDelegator struct {
 	doguName  string
 	forwarder portForwarder
-	doguReg   registry.DoguRegistry
+	doguReg   doguRegistry
 	editor    doguConfigurationEditor
 }
 

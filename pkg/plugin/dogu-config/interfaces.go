@@ -1,8 +1,7 @@
-package config
+package dogu_config
 
 import (
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/cesapp-lib/keys"
 	"github.com/cloudogu/cesapp-lib/registry"
 )
 
@@ -22,13 +21,6 @@ type doguConfigurationEditor interface {
 	SetFieldToValue(field core.ConfigurationField, value string, deleteOnEmpty bool) error
 	// DeleteField deletes the field.
 	DeleteField(field core.ConfigurationField) error
-}
-
-type keyManager interface {
-	// GetPublicKey returns a dogu's public key
-	GetPublicKey() (*keys.PublicKey, error)
-	// ExistsPublicKey returns true if a dogu's public key exist.
-	ExistsPublicKey() (bool, error)
 }
 
 // doguRegistry manages dogus on a ecosystem

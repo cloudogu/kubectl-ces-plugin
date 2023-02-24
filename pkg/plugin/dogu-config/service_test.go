@@ -1,4 +1,4 @@
-package config
+package dogu_config
 
 import (
 	"github.com/cloudogu/cesapp-lib/core"

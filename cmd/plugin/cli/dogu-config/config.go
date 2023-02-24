@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin/dogu/config"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin/dogu-config"
 )
 
 const (
@@ -22,7 +22,7 @@ var doguConfigServiceFactory = func(doguName string) (doguConfigService, error) 
 		return nil, err
 	}
 
-	return config.New(doguName, namespace, restConfig)
+	return dogu_config.New(doguName, namespace, restConfig)
 }
 
 func getKubeConfig(k8sArgs interface{}) (*rest.Config, string, error) {
