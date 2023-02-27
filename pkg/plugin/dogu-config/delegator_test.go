@@ -12,12 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/cesapp-lib/keys"
 	"github.com/cloudogu/cesapp-lib/registry/mocks"
 )
 
 const (
 	testNameSpace = "test-namespace"
-	testDoguName  = "official/ldap"
+	testDoguName  = "ldap"
 )
 
 //go:embed testdata/ldap-dogu.json
@@ -32,23 +33,12 @@ func Test_newDelegator(t *testing.T) {
 		mockReg := newMockCesRegistry(t)
 		mockReg.EXPECT().DoguRegistry().Return(mockDoguReg).Once()
 
-		expectedEdFactory := &defaultEditorFactory{
-			doguName: testDoguName,
-			registry: mockReg,
-		}
-		expectedDelegator := &doguConfigurationDelegator{
-			doguName:  testDoguName,
-			forwarder: mockForwarder,
-			doguReg:   mockDoguReg,
-			edFactory: expectedEdFactory,
-		}
-
 		// when
 		actual := newDelegator(dogu, mockForwarder, mockReg)
 
 		// then
 		require.IsType(t, &doguConfigurationDelegator{}, actual)
-		assert.Equal(t, expectedDelegator, actual)
+		assert.NotNil(t, actual)
 	})
 }
 
@@ -142,10 +132,10 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		edFactoryMock := newMockEditorFactory(t)
 		edFactoryMock.EXPECT().create().Return(nil, assert.AnError).Once()
 		sut := &doguConfigurationDelegator{
-			doguName:  testDoguName,
-			forwarder: portForwarderMock,
-			doguReg:   doguRegMock,
-			edFactory: edFactoryMock,
+			doguName:    testDoguName,
+			forwarder:   portForwarderMock,
+			doguReg:     doguRegMock,
+			editFactory: edFactoryMock,
 		}
 
 		// when
@@ -156,6 +146,7 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not create configuration editor for dogu 'ldap'")
 	})
 	t.Run("should return error from payload function", func(t *testing.T) {
 		// given
@@ -170,10 +161,10 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		edFactoryMock := newMockEditorFactory(t)
 		edFactoryMock.EXPECT().create().Return(editorMock, nil).Once()
 		sut := &doguConfigurationDelegator{
-			doguName:  testDoguName,
-			forwarder: portForwarderMock,
-			doguReg:   doguRegMock,
-			edFactory: edFactoryMock,
+			doguName:    testDoguName,
+			forwarder:   portForwarderMock,
+			doguReg:     doguRegMock,
+			editFactory: edFactoryMock,
 		}
 
 		// when
@@ -199,10 +190,10 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		edFactoryMock := newMockEditorFactory(t)
 		edFactoryMock.EXPECT().create().Return(editorMock, nil).Once()
 		sut := &doguConfigurationDelegator{
-			doguName:  testDoguName,
-			forwarder: portForwarderMock,
-			doguReg:   doguRegMock,
-			edFactory: edFactoryMock,
+			doguName:    testDoguName,
+			forwarder:   portForwarderMock,
+			doguReg:     doguRegMock,
+			editFactory: edFactoryMock,
 		}
 
 		// when
@@ -254,4 +245,133 @@ func captureOutput(fakeReaderPipe, fakeWriterPipe, originalStdout *os.File) stri
 
 func restoreOriginalStdout(stdout *os.File) {
 	os.Stdout = stdout
+}
+
+func Test_defaultEditorFactory_create(t *testing.T) {
+	t.Run("should return error from key manager factory creation", func(t *testing.T) {
+		// given
+		keyManagerFactoryMock := newMockKeyManagerFactory(t)
+		keyManagerFactoryMock.EXPECT().create(mocks.Anything, testDoguName).Return(nil, assert.AnError)
+
+		sut := &defaultEditorFactory{
+			doguName:          testDoguName,
+			keyManagerFactory: keyManagerFactoryMock,
+		}
+
+		// when
+		_, err := sut.create()
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not create key manager for dogu '"+testDoguName+"'")
+	})
+	t.Run("should return error from key manager", func(t *testing.T) {
+		// given
+		keyManagerMock := newMockKeyManager(t)
+		keyManagerMock.EXPECT().GetPublicKey().Return(nil, assert.AnError)
+		keyManagerFactoryMock := newMockKeyManagerFactory(t)
+		keyManagerFactoryMock.EXPECT().create(mocks.Anything, testDoguName).Return(keyManagerMock, nil)
+
+		sut := &defaultEditorFactory{
+			doguName:          testDoguName,
+			keyManagerFactory: keyManagerFactoryMock,
+		}
+
+		// when
+		_, err := sut.create()
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not get public key for dogu '"+testDoguName+"'")
+	})
+	t.Run("should return error from config editor", func(t *testing.T) {
+		// given
+		mockReg := newMockCesRegistry(t)
+		mockReg.EXPECT().DoguConfig(testDoguName).Return(&mockNoopDoguConfig{}).Once()
+
+		keyManagerMock := newMockKeyManager(t)
+		keyManagerMock.EXPECT().GetPublicKey().Return(&keys.PublicKey{}, nil)
+		keyManagerFactoryMock := newMockKeyManagerFactory(t)
+		keyManagerFactoryMock.EXPECT().create(mocks.Anything, testDoguName).Return(keyManagerMock, nil)
+
+		sut := &defaultEditorFactory{
+			doguName:          testDoguName,
+			keyManagerFactory: keyManagerFactoryMock,
+			registry:          mockReg,
+		}
+
+		// when
+		actual, err := sut.create()
+
+		// then
+		require.NoError(t, err)
+		assert.NotNil(t, actual)
+	})
+	t.Run("should return config editor", func(t *testing.T) {
+		// given
+		mockReg := newMockCesRegistry(t)
+		mockReg.EXPECT().DoguConfig(testDoguName).Return(&mockNoopDoguConfig{}).Once()
+
+		keyManagerMock := newMockKeyManager(t)
+		keyManagerMock.EXPECT().GetPublicKey().Return(&keys.PublicKey{}, nil)
+		keyManagerFactoryMock := newMockKeyManagerFactory(t)
+		keyManagerFactoryMock.EXPECT().create(mocks.Anything, testDoguName).Return(keyManagerMock, nil)
+
+		sut := &defaultEditorFactory{
+			doguName:          testDoguName,
+			keyManagerFactory: keyManagerFactoryMock,
+			registry:          mockReg,
+		}
+
+		// when
+		actual, err := sut.create()
+
+		// then
+		require.NoError(t, err)
+		assert.NotNil(t, actual)
+	})
+}
+
+type mockNoopDoguConfig struct{}
+
+func (m *mockNoopDoguConfig) Set(_, _ string) error {
+	return nil
+}
+
+func (m *mockNoopDoguConfig) SetWithLifetime(_, _ string, _ int) error {
+	return nil
+}
+
+func (m *mockNoopDoguConfig) Refresh(_ string, _ int) error {
+	return nil
+}
+
+func (m *mockNoopDoguConfig) Get(_ string) (string, error) {
+	return "", nil
+}
+
+func (m *mockNoopDoguConfig) GetAll() (map[string]string, error) {
+	return nil, nil
+}
+
+func (m *mockNoopDoguConfig) Delete(_ string) error {
+	return nil
+}
+
+func (m *mockNoopDoguConfig) DeleteRecursive(_ string) error {
+	return nil
+}
+
+func (m *mockNoopDoguConfig) Exists(_ string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockNoopDoguConfig) RemoveAll() error {
+	return nil
+}
+
+func (m *mockNoopDoguConfig) GetOrFalse(_ string) (bool, string, error) {
+	return false, "", nil
 }

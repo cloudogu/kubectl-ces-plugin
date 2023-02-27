@@ -2,11 +2,27 @@ package dogu_config
 
 import (
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/cesapp-lib/keys"
 	"github.com/cloudogu/cesapp-lib/registry"
 )
 
+type editorFactory interface {
+	create() (doguConfigurationEditor, error)
+}
+
+type keyManagerFactory interface {
+	create(registry cesRegistry, doguName string) (keyManager, error)
+}
+
+type keyManager interface {
+	// GetPublicKey returns the public key from the dogus etcd directory.
+	GetPublicKey() (*keys.PublicKey, error)
+}
+
 // portForwarder provides functionality to create a port-forward.
 type portForwarder interface {
+	// ExecuteWithPortForward provides the given function `fn()` with a given port-forward. Unless errors exists during
+	// the port-forward instantiation, `fn()` guarantees a ready-to-use connection.
 	ExecuteWithPortForward(fn func() error) error
 }
 
