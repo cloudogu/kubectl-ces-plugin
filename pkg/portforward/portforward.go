@@ -64,10 +64,18 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 
 	fmt.Printf("Starting port-forward %d:%d\n", kpf.localPort, kpf.clusterPort)
 
-	go fw.ForwardPorts()
+	errCh := make(chan error)
+	go func() {
+		err2 := fw.ForwardPorts()
+		errCh <- err2
+	}()
 
 	// wait for the port forward to be established
-	<-readyCh
+	select {
+	case err := <-errCh:
+		return fmt.Errorf("could not create port-forward: %w", err)
+	case <-readyCh:
+	}
 
 	err = fn()
 	if err != nil {

@@ -1,7 +1,5 @@
 package dogu_config
 
-import "k8s.io/cli-runtime/pkg/genericclioptions"
-
 type serviceFactory interface {
 	create(doguName string) (doguConfigService, error)
 }
@@ -20,6 +18,9 @@ type doguConfigService interface {
 	GetValue(registryKey string) (string, error)
 }
 
-type restClientGetter interface {
-	genericclioptions.RESTClientGetter
+type configTransporter interface {
+	// Get returns a previously Set configuration value.
+	Get(key string) interface{}
+	// Set persists the given value which can later be addressed with the key.
+	Set(key string, value interface{})
 }

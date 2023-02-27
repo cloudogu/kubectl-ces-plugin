@@ -31,7 +31,7 @@ func RootCmd() *cobra.Command {
 		Long:          `.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			err := viper.BindPFlags(cmd.Flags())
 			cmd.SetErr(streams.ErrOut)
 			if err != nil {
