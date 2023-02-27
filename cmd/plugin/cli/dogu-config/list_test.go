@@ -11,9 +11,9 @@ func (s *DoguConfigCLITestSuite) Test_listCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := listCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := listCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 		doguName := "redmine"
 
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
@@ -24,8 +24,8 @@ func (s *DoguConfigCLITestSuite) Test_listCmd() {
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		configCmd.SetArgs([]string{doguName})
-		err := configCmd.Execute()
+		sut.SetArgs([]string{doguName})
+		err := sut.Execute()
 
 		// then
 		s.NoError(err, "command should be successful")
@@ -38,9 +38,9 @@ func (s *DoguConfigCLITestSuite) Test_listCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := listCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := listCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 		doguName := "redmine"
 
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
@@ -48,8 +48,8 @@ func (s *DoguConfigCLITestSuite) Test_listCmd() {
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		configCmd.SetArgs([]string{doguName})
-		err := configCmd.Execute()
+		sut.SetArgs([]string{doguName})
+		err := sut.Execute()
 
 		// then
 		s.Contains(outBuf.String(), "Usage:", "should have usage output")
@@ -62,16 +62,16 @@ func (s *DoguConfigCLITestSuite) Test_listCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := listCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := listCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 		doguName := "redmine"
 
 		doguConfigServiceFactory = errorDoguConfigServiceFactory(assert.AnError)
 
 		// when
-		configCmd.SetArgs([]string{doguName})
-		err := configCmd.Execute()
+		sut.SetArgs([]string{doguName})
+		err := sut.Execute()
 
 		// then
 		s.Contains(outBuf.String(), "Usage:", "should have usage output")
@@ -84,12 +84,12 @@ func (s *DoguConfigCLITestSuite) Test_listCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := listCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := listCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 
 		// when
-		err := configCmd.Execute()
+		err := sut.Execute()
 
 		// then
 		s.Contains(outBuf.String(), "Usage:", "should have usage output")

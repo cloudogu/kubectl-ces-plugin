@@ -15,17 +15,17 @@ func (s *DoguConfigCLITestSuite) Test_setCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := setCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := setCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		doguConfigServiceFactoryMock.EXPECT().Set(configKey, configValue).Return(nil).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		configCmd.SetArgs([]string{doguName, configKey, configValue})
-		err := configCmd.Execute()
+		sut.SetArgs([]string{doguName, configKey, configValue})
+		err := sut.Execute()
 
 		// then
 		s.NoError(err, "command should be successful")
@@ -37,17 +37,17 @@ func (s *DoguConfigCLITestSuite) Test_setCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := setCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := setCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 
 		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
 		doguConfigServiceFactoryMock.EXPECT().Set(configKey, configValue).Return(assert.AnError).Once()
 		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		configCmd.SetArgs([]string{doguName, configKey, configValue})
-		err := configCmd.Execute()
+		sut.SetArgs([]string{doguName, configKey, configValue})
+		err := sut.Execute()
 
 		// then
 		s.Contains(outBuf.String(), "Usage:", "should have usage output")
@@ -60,15 +60,15 @@ func (s *DoguConfigCLITestSuite) Test_setCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := setCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := setCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 
 		doguConfigServiceFactory = errorDoguConfigServiceFactory(assert.AnError)
 
 		// when
-		configCmd.SetArgs([]string{doguName, configKey, configValue})
-		err := configCmd.Execute()
+		sut.SetArgs([]string{doguName, configKey, configValue})
+		err := sut.Execute()
 
 		// then
 		s.Contains(outBuf.String(), "Usage:", "should have usage output")
@@ -81,12 +81,12 @@ func (s *DoguConfigCLITestSuite) Test_setCmd() {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		configCmd := setCmd()
-		configCmd.SetOut(outBuf)
-		configCmd.SetErr(errBuf)
+		sut := setCmd()
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
 
 		// when
-		err := configCmd.Execute()
+		err := sut.Execute()
 
 		// then
 		s.Contains(outBuf.String(), "Usage:", "should have usage output")
