@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getCmd() *cobra.Command {
+func getCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "get <dogu> <configKey>",
+		Use:     "get <dogu> <config-key>",
 		Aliases: []string{"g"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -16,14 +16,12 @@ func getCmd() *cobra.Command {
 			configKey := ""
 
 			switch len(args) {
-			case 1:
-				doguName = args[0]
 			case 2:
 				doguName = args[0]
 				configKey = args[1]
 			}
 
-			configService, err := doguConfigServiceFactory(doguName)
+			configService, err := factory.create(doguName)
 			if err != nil {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}

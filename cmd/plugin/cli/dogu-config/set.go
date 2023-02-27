@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setCmd() *cobra.Command {
+func setCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "set <dogu> <config-key> <config-value>",
 		Aliases: []string{"s"},
@@ -17,18 +17,13 @@ func setCmd() *cobra.Command {
 			configValue := ""
 
 			switch len(args) {
-			case 1:
-				doguName = args[0]
-			case 2:
-				doguName = args[0]
-				configKey = args[1]
 			case 3:
 				doguName = args[0]
 				configKey = args[1]
 				configValue = args[2]
 			}
 
-			configService, err := doguConfigServiceFactory(doguName)
+			configService, err := factory.create(doguName)
 			if err != nil {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}

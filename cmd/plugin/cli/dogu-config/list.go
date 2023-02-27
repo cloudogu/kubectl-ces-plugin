@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func listCmd() *cobra.Command {
+func listCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list <dogu>",
 		Aliases: []string{"l", "ls"},
@@ -18,7 +18,7 @@ func listCmd() *cobra.Command {
 				doguName = args[0]
 			}
 
-			configService, err := doguConfigServiceFactory(doguName)
+			configService, err := factory.create(doguName)
 			if err != nil {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}

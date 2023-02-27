@@ -3,88 +3,91 @@ package dogu_config
 import (
 	"bytes"
 	"fmt"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
-	s.Run("should get config value", func() {
+func Test_deleteCmd(t *testing.T) {
+	t.Run("should get config value", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := deleteCmd()
+
+		serviceMock := newMockDoguConfigService(t)
+		serviceMock.EXPECT().Delete(testConfigKey).Return(nil).Once()
+		serviceFactoryMock := newMockServiceFactory(t)
+		serviceFactoryMock.EXPECT().create(testDoguName).Return(serviceMock, nil).Once()
+
+		sut := deleteCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
-		doguName := "redmine"
-
-		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
-		configKey := "redmineKey"
-		doguConfigServiceFactoryMock.EXPECT().Delete(configKey).Return(nil).Once()
-		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		sut.SetArgs([]string{doguName, configKey})
+		sut.SetArgs([]string{testDoguName, testConfigKey})
 		err := sut.Execute()
 
 		// then
-		s.NoError(err, "command should be successful")
-		s.Empty(outBuf.String())
-		s.Empty(errBuf.String())
+		require.NoError(t, err, "command should be successful")
+		assert.Empty(t, outBuf.String())
+		assert.Empty(t, errBuf.String())
 	})
 
-	s.Run("should return error from configService", func() {
+	t.Run("should return error from configService", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := deleteCmd()
+
+		serviceMock := newMockDoguConfigService(t)
+		serviceMock.EXPECT().Delete(testConfigKey).Return(assert.AnError).Once()
+		serviceFactoryMock := newMockServiceFactory(t)
+		serviceFactoryMock.EXPECT().create(testDoguName).Return(serviceMock, nil).Once()
+
+		sut := deleteCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
-		doguName := "redmine"
-
-		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
-		configKey := "redmineKey"
-		doguConfigServiceFactoryMock.EXPECT().Delete(configKey).Return(assert.AnError).Once()
-		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		sut.SetArgs([]string{doguName, configKey})
+		sut.SetArgs([]string{testDoguName, testConfigKey})
 		err := sut.Execute()
 
 		// then
-		s.Contains(outBuf.String(), "Usage:", "should have usage output")
-		s.Contains(errBuf.String(), err.Error(), "should contain error output")
-		s.ErrorContains(err, fmt.Sprintf("cannot delete config key '%s' in delete dogu config command", configKey))
-		s.ErrorIs(err, assert.AnError)
+		assert.Contains(t, outBuf.String(), "Usage:", "should have usage output")
+		assert.Contains(t, errBuf.String(), err.Error(), "should contain error output")
+		assert.ErrorContains(t, err, fmt.Sprintf("cannot delete config key '%s' in delete dogu config command", testConfigKey))
+		assert.ErrorIs(t, err, assert.AnError)
 	})
 
-	s.Run("should return error that the config service cannot be created", func() {
+	t.Run("should return error that the config service cannot be created", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := deleteCmd()
+
+		serviceFactoryMock := newMockServiceFactory(t)
+		serviceFactoryMock.EXPECT().create(testDoguName).Return(nil, assert.AnError).Once()
+
+		sut := deleteCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
-		doguName := "redmine"
-
-		configKey := "redmineKey"
-		doguConfigServiceFactory = errorDoguConfigServiceFactory(assert.AnError)
 
 		// when
-		sut.SetArgs([]string{doguName, configKey})
+		sut.SetArgs([]string{testDoguName, testConfigKey})
 		err := sut.Execute()
 
 		// then
-		s.Contains(outBuf.String(), "Usage:", "should have usage output")
-		s.Contains(errBuf.String(), err.Error(), "should contain error output")
-		s.ErrorContains(err, "cannot create config service")
-		s.ErrorIs(err, assert.AnError)
+		assert.Contains(t, outBuf.String(), "Usage:", "should have usage output")
+		assert.Contains(t, errBuf.String(), err.Error(), "should contain error output")
+		assert.ErrorContains(t, err, "cannot create config service")
+		assert.ErrorIs(t, err, assert.AnError)
 	})
 
-	s.Run("should fail with too few Arguments", func() {
+	t.Run("should fail with too few Arguments", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := deleteCmd()
+		serviceFactoryMock := newMockServiceFactory(t)
+		sut := deleteCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
 
@@ -92,8 +95,8 @@ func (s *DoguConfigCLITestSuite) Test_deleteCmd() {
 		err := sut.Execute()
 
 		// then
-		s.Contains(outBuf.String(), "Usage:", "should have usage output")
-		s.Contains(errBuf.String(), err.Error(), "should contain error output")
-		s.EqualError(err, "accepts 2 arg(s), received 0")
+		assert.Contains(t, outBuf.String(), "Usage:", "should have usage output")
+		assert.Contains(t, errBuf.String(), err.Error(), "should contain error output")
+		assert.EqualError(t, err, "accepts 2 arg(s), received 0")
 	})
 }

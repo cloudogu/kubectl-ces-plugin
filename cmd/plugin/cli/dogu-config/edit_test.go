@@ -2,90 +2,119 @@ package dogu_config
 
 import (
 	"bytes"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func (s *DoguConfigCLITestSuite) Test_editCmd() {
-	s.Run("should set config value", func() {
+const (
+	testDoguName  = "redmine"
+	testConfigKey = "redmineKey"
+)
+
+func Test_editCmd(t *testing.T) {
+	t.Run("should edit all config values of dogu", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := editCmd()
+
+		serviceMock := newMockDoguConfigService(t)
+		serviceMock.EXPECT().Edit("", false).Return(nil).Once()
+		serviceFactoryMock := newMockServiceFactory(t)
+		serviceFactoryMock.EXPECT().create(testDoguName).Return(serviceMock, nil).Once()
+
+		sut := editCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
-		doguName := "redmine"
-
-		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
-		const configKey = "redmineKey"
-		const deleteOnEdit = false
-		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, deleteOnEdit).Return(nil).Once()
-		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		sut.SetArgs([]string{doguName, configKey})
+		sut.SetArgs([]string{testDoguName})
 		err := sut.Execute()
 
 		// then
-		s.NoError(err, "command should be successful")
-		s.Empty(outBuf.String())
-		s.Empty(errBuf.String())
+		assert.NoError(t, err, "command should be successful")
+		assert.Empty(t, outBuf.String())
+		assert.Empty(t, errBuf.String())
 	})
 
-	s.Run("should return error from configService", func() {
+	t.Run("should edit specific config value", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := editCmd()
+
+		serviceMock := newMockDoguConfigService(t)
+		serviceMock.EXPECT().Edit(testConfigKey, false).Return(nil).Once()
+		serviceFactoryMock := newMockServiceFactory(t)
+		serviceFactoryMock.EXPECT().create(testDoguName).Return(serviceMock, nil).Once()
+
+		sut := editCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
-		doguName := "redmine"
-
-		doguConfigServiceFactoryMock := newMockDoguConfigService(s.T())
-		const configKey = "redmineKey"
-		const deleteOnEdit = false
-		doguConfigServiceFactoryMock.EXPECT().Edit(configKey, deleteOnEdit).Return(assert.AnError).Once()
-		doguConfigServiceFactory = noopDoguConfigServiceFactory(doguConfigServiceFactoryMock)
 
 		// when
-		sut.SetArgs([]string{doguName, configKey})
+		sut.SetArgs([]string{testDoguName, testConfigKey})
 		err := sut.Execute()
 
 		// then
-		s.Contains(outBuf.String(), "Usage:", "should have usage output")
-		s.Contains(errBuf.String(), err.Error(), "should contain error output")
-		s.ErrorContains(err, "cannot edit config keys")
-		s.ErrorIs(err, assert.AnError)
+		assert.NoError(t, err, "command should be successful")
+		assert.Empty(t, outBuf.String())
+		assert.Empty(t, errBuf.String())
 	})
 
-	s.Run("should return error that the config service cannot be created", func() {
+	t.Run("should return error from configService", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := editCmd()
+
+		serviceMock := newMockDoguConfigService(t)
+		serviceMock.EXPECT().Edit(testConfigKey, false).Return(assert.AnError).Once()
+		serviceFactoryMock := newMockServiceFactory(t)
+		serviceFactoryMock.EXPECT().create(testDoguName).Return(serviceMock, nil).Once()
+
+		sut := editCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
-		doguName := "redmine"
-
-		configKey := "redmineKey"
-		doguConfigServiceFactory = errorDoguConfigServiceFactory(assert.AnError)
 
 		// when
-		sut.SetArgs([]string{doguName, configKey})
+		sut.SetArgs([]string{testDoguName, testConfigKey})
 		err := sut.Execute()
 
 		// then
-		s.Contains(outBuf.String(), "Usage:", "should have usage output")
-		s.Contains(errBuf.String(), err.Error(), "should contain error output")
-		s.ErrorContains(err, "cannot create config service")
-		s.ErrorIs(err, assert.AnError)
+		assert.Contains(t, outBuf.String(), "Usage:", "should have usage output")
+		assert.Contains(t, errBuf.String(), err.Error(), "should contain error output")
+		assert.ErrorContains(t, err, "cannot edit config keys")
+		assert.ErrorIs(t, err, assert.AnError)
 	})
 
-	s.Run("should fail with too few Arguments", func() {
+	t.Run("should return error that the config service cannot be created", func(t *testing.T) {
 		// given
 		outBuf := new(bytes.Buffer)
 		errBuf := new(bytes.Buffer)
-		sut := editCmd()
+
+		serviceFactoryMock := newMockServiceFactory(t)
+		serviceFactoryMock.EXPECT().create(testDoguName).Return(nil, assert.AnError).Once()
+
+		sut := editCmd(serviceFactoryMock)
+		sut.SetOut(outBuf)
+		sut.SetErr(errBuf)
+
+		// when
+		sut.SetArgs([]string{testDoguName, testConfigKey})
+		err := sut.Execute()
+
+		// then
+		assert.Contains(t, outBuf.String(), "Usage:", "should have usage output")
+		assert.Contains(t, errBuf.String(), err.Error(), "should contain error output")
+		assert.ErrorContains(t, err, "cannot create config service")
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+
+	t.Run("should fail with too few Arguments", func(t *testing.T) {
+		// given
+		outBuf := new(bytes.Buffer)
+		errBuf := new(bytes.Buffer)
+		serviceFactoryMock := newMockServiceFactory(t)
+		sut := editCmd(serviceFactoryMock)
 		sut.SetOut(outBuf)
 		sut.SetErr(errBuf)
 
@@ -93,8 +122,8 @@ func (s *DoguConfigCLITestSuite) Test_editCmd() {
 		err := sut.Execute()
 
 		// then
-		s.Contains(outBuf.String(), "Usage:", "should have usage output")
-		s.Contains(errBuf.String(), err.Error(), "should contain error output")
-		s.EqualError(err, "accepts between 1 and 2 arg(s), received 0")
+		assert.Contains(t, outBuf.String(), "Usage:", "should have usage output")
+		assert.Contains(t, errBuf.String(), err.Error(), "should contain error output")
+		assert.EqualError(t, err, "accepts between 1 and 2 arg(s), received 0")
 	})
 }

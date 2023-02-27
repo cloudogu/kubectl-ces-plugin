@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func deleteCmd() *cobra.Command {
+func deleteCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "delete <dogu> <configKey>",
+		Use:     "delete <dogu> <config-key>",
 		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -16,14 +16,12 @@ func deleteCmd() *cobra.Command {
 			configKey := ""
 
 			switch len(args) {
-			case 1:
-				doguName = args[0]
 			case 2:
 				doguName = args[0]
 				configKey = args[1]
 			}
 
-			configService, err := doguConfigServiceFactory(doguName)
+			configService, err := factory.create(doguName)
 			if err != nil {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}

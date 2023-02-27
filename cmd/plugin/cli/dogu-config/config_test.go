@@ -1,36 +1,46 @@
 package dogu_config
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 )
 
-type DoguConfigCLITestSuite struct {
-	suite.Suite
-	originalFactory func(doguName string) (doguConfigService, error)
-}
+const testNamespace = "ecosystem"
 
-func TestDoguConfigCLITestSuite(t *testing.T) {
-	suite.Run(t, new(DoguConfigCLITestSuite))
-}
+func Test_defaultServiceFactory_create(t *testing.T) {
+	t.Run("should fail to create rest config", func(t *testing.T) {
+		// given
+		cfgMock := newMockRestClientGetter(t)
+		cfgMock.EXPECT().ToRESTConfig().Return(nil, assert.AnError).Once()
+		sut := defaultServiceFactory{
+			namespace:   testNamespace,
+			configFlags: cfgMock,
+		}
 
-func (s *DoguConfigCLITestSuite) SetupSuite() {
-	s.originalFactory = doguConfigServiceFactory
-}
+		// when
+		actual, err := sut.create(testDoguName)
 
-func (s *DoguConfigCLITestSuite) TearDownSuite() {
-	doguConfigServiceFactory = s.originalFactory
-}
+		// then
+		require.Error(t, err)
+		assert.Nil(t, actual)
+		assert.ErrorContains(t, err, "could not create rest config")
+	})
+	t.Run("should succeed", func(t *testing.T) {
+		// given
+		cfgMock := newMockRestClientGetter(t)
+		cfgMock.EXPECT().ToRESTConfig().Return(&rest.Config{}, nil).Once()
+		sut := defaultServiceFactory{
+			namespace:   testNamespace,
+			configFlags: cfgMock,
+		}
 
-func noopDoguConfigServiceFactory(configServiceMock *mockDoguConfigService) func(doguName string) (doguConfigService, error) {
-	return func(doguName string) (doguConfigService, error) {
-		return configServiceMock, nil
-	}
-}
+		// when
+		actual, err := sut.create(testDoguName)
 
-func errorDoguConfigServiceFactory(expectedError error) func(doguName string) (doguConfigService, error) {
-	return func(doguName string) (doguConfigService, error) {
-		return nil, expectedError
-	}
+		// then
+		require.NoError(t, err)
+		assert.NotNil(t, actual)
+	})
 }

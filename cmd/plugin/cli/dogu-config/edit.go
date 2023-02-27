@@ -15,7 +15,7 @@ var (
 	flagValueDeleteOnEmpty bool
 )
 
-func editCmd() *cobra.Command {
+func editCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     fmt.Sprintf("edit <dogu> [<config-key>] [-%s | --%s]", flagKeyDeleteOnEmptyShort, flagKeyDeleteOnEmptyLong),
 		Aliases: []string{"e"},
@@ -34,7 +34,7 @@ func editCmd() *cobra.Command {
 				configKey = args[1]
 			}
 
-			configService, err := doguConfigServiceFactory(doguName)
+			configService, err := factory.create(doguName)
 			if err != nil {
 				return fmt.Errorf(errMsgDoguConfigServiceCreate, err)
 			}
