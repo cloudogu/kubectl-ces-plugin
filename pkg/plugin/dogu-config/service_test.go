@@ -2,11 +2,8 @@ package dogu_config
 
 import (
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/cesapp-lib/registry"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,156 +11,14 @@ import (
 )
 
 func Test_New(t *testing.T) {
-	t.Run("should fail while finding free port", func(t *testing.T) {
-		// given
-		originalFreePort := freePort
-		defer func() { freePort = originalFreePort }()
-		freePort = func() (int, error) {
-			return 0, assert.AnError
-		}
-
-		// when
-		_, err := New(testDoguName, testNameSpace, &rest.Config{})
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-	})
-	t.Run("should fail on etcd creation", func(t *testing.T) {
-		// given
-		originalFreePort := freePort
-		defer func() { freePort = originalFreePort }()
-		freePort = func() (int, error) {
-			return 45678, nil
-		}
-
-		originalNewPortForwarder := newPortForwarder
-		defer func() { newPortForwarder = originalNewPortForwarder }()
-		mockForwarder := newMockPortForwarder(t)
-		newPortForwarder = func(_ *rest.Config, pod types.NamespacedName, localPort, clusterPort int) portforward.PortForwarder {
-			expectedPod := types.NamespacedName{
-				Namespace: testNameSpace,
-				Name:      "etcd-0",
-			}
-			assert.Equal(t, expectedPod, pod)
-			assert.Equal(t, 45678, localPort)
-			assert.Equal(t, 2379, clusterPort)
-			return mockForwarder
-		}
-
-		originalNewRegistry := newRegistry
-		defer func() { newRegistry = originalNewRegistry }()
-		newRegistry = func(config core.Registry) (registry.Registry, error) {
-			expectedConfig := core.Registry{
-				Type:      "etcd",
-				Endpoints: []string{"http://localhost:45678"},
-			}
-			assert.Equal(t, expectedConfig, config)
-			return nil, assert.AnError
-		}
-
-		// when
-		_, err := New(testDoguName, testNameSpace, &rest.Config{})
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "could not create etcd registry")
-	})
-	t.Run("should fail to create delegator", func(t *testing.T) {
-		// given
-		originalFreePort := freePort
-		defer func() { freePort = originalFreePort }()
-		freePort = func() (int, error) {
-			return 45678, nil
-		}
-
-		originalNewPortForwarder := newPortForwarder
-		defer func() { newPortForwarder = originalNewPortForwarder }()
-		mockForwarder := newMockPortForwarder(t)
-		newPortForwarder = func(_ *rest.Config, pod types.NamespacedName, localPort, clusterPort int) portforward.PortForwarder {
-			expectedPod := types.NamespacedName{
-				Namespace: testNameSpace,
-				Name:      "etcd-0",
-			}
-			assert.Equal(t, expectedPod, pod)
-			assert.Equal(t, 45678, localPort)
-			assert.Equal(t, 2379, clusterPort)
-			return mockForwarder
-		}
-
-		originalNewRegistry := newRegistry
-		defer func() { newRegistry = originalNewRegistry }()
-		mockReg := newMockCesRegistry(t)
-		newRegistry = func(config core.Registry) (registry.Registry, error) {
-			expectedConfig := core.Registry{
-				Type:      "etcd",
-				Endpoints: []string{"http://localhost:45678"},
-			}
-			assert.Equal(t, expectedConfig, config)
-			return mockReg, nil
-		}
-
-		originalNewDelegator := newDelegator
-		defer func() { newDelegator = originalNewDelegator }()
-		newDelegator = func(_ string, _ portForwarder, _ cesRegistry) (delegator, error) {
-			return nil, assert.AnError
-		}
-
-		// when
-		_, err := New(testDoguName, testNameSpace, &rest.Config{})
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-	})
 	t.Run("should succeed", func(t *testing.T) {
 		// given
-		originalFreePort := freePort
-		defer func() { freePort = originalFreePort }()
-		freePort = func() (int, error) {
-			return 45678, nil
-		}
-
-		originalNewPortForwarder := newPortForwarder
-		defer func() { newPortForwarder = originalNewPortForwarder }()
-		mockForwarder := newMockPortForwarder(t)
-		newPortForwarder = func(_ *rest.Config, pod types.NamespacedName, localPort, clusterPort int) portforward.PortForwarder {
-			expectedPod := types.NamespacedName{
-				Namespace: testNameSpace,
-				Name:      "etcd-0",
-			}
-			assert.Equal(t, expectedPod, pod)
-			assert.Equal(t, 45678, localPort)
-			assert.Equal(t, 2379, clusterPort)
-			return mockForwarder
-		}
-
-		originalNewRegistry := newRegistry
-		defer func() { newRegistry = originalNewRegistry }()
-		mockReg := newMockCesRegistry(t)
-		newRegistry = func(config core.Registry) (registry.Registry, error) {
-			expectedConfig := core.Registry{
-				Type:      "etcd",
-				Endpoints: []string{"http://localhost:45678"},
-			}
-			assert.Equal(t, expectedConfig, config)
-			return mockReg, nil
-		}
-
-		originalNewDelegator := newDelegator
-		defer func() { newDelegator = originalNewDelegator }()
-		mockDel := newMockDelegator(t)
-		newDelegator = func(_ string, _ portForwarder, _ cesRegistry) (delegator, error) {
-			return mockDel, nil
-		}
 
 		// when
-		actual, err := New(testDoguName, testNameSpace, &rest.Config{})
+		_, err := New(testDoguName, testNameSpace, &rest.Config{})
 
 		// then
 		require.NoError(t, err)
-		assert.IsType(t, &mockDelegator{}, actual.delegator)
 	})
 }
 

@@ -13,22 +13,13 @@ import (
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 )
 
-var (
-	freePort         = freeport.GetFreePort
-	newPortForwarder = portforward.New
-	newRegistry      = registry.New
-)
-
 func New(doguName, namespace string, restConfig *rest.Config) (*doguConfigService, error) {
 	forwarder, reg, err := createPortForwardAndRegistry(namespace, restConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	delegator, err := newDelegator(doguName, forwarder, reg)
-	if err != nil {
-		return nil, err
-	}
+	delegator := newDelegator(doguName, forwarder, reg)
 
 	return &doguConfigService{
 		delegator: delegator,
@@ -36,15 +27,15 @@ func New(doguName, namespace string, restConfig *rest.Config) (*doguConfigServic
 }
 
 func createPortForwardAndRegistry(namespace string, restConfig *rest.Config) (portForwarder, cesRegistry, error) {
-	freePort, err := freePort()
+	freePort, err := freeport.GetFreePort()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("could not find free port for port-forward: %w", err)
 	}
 
-	forward := newPortForwarder(restConfig, types.NamespacedName{Namespace: namespace, Name: "etcd-0"}, freePort, 2379)
+	forward := portforward.New(restConfig, types.NamespacedName{Namespace: namespace, Name: "etcd-0"}, freePort, 2379)
 
 	endpoint := fmt.Sprintf("http://localhost:%d", freePort)
-	reg, err := newRegistry(core.Registry{
+	reg, err := registry.New(core.Registry{
 		Type:      "etcd",
 		Endpoints: []string{endpoint},
 	})

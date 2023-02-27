@@ -3,12 +3,11 @@ package dogu_config
 import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/registry"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 )
 
 // portForwarder provides functionality to create a port-forward.
 type portForwarder interface {
-	portforward.PortForwarder
+	ExecuteWithPortForward(fn func() error) error
 }
 
 // doguConfigurationEditor is able to edit registry configuration values of a dogu.

@@ -15,11 +15,42 @@ import (
 	"github.com/cloudogu/cesapp-lib/registry/mocks"
 )
 
-const testNameSpace = "test-namespace"
-const testDoguName = "official/ldap"
+const (
+	testNameSpace = "test-namespace"
+	testDoguName  = "official/ldap"
+)
 
 //go:embed testdata/ldap-dogu.json
 var ldapBytes []byte
+
+func Test_newDelegator(t *testing.T) {
+	t.Run("should create delegator correctly", func(t *testing.T) {
+		// given
+		dogu := testDoguName
+		mockForwarder := newMockPortForwarder(t)
+		mockDoguReg := newMockDoguRegistry(t)
+		mockReg := newMockCesRegistry(t)
+		mockReg.EXPECT().DoguRegistry().Return(mockDoguReg).Once()
+
+		expectedEdFactory := &defaultEditorFactory{
+			doguName: testDoguName,
+			registry: mockReg,
+		}
+		expectedDelegator := &doguConfigurationDelegator{
+			doguName:  testDoguName,
+			forwarder: mockForwarder,
+			doguReg:   mockDoguReg,
+			edFactory: expectedEdFactory,
+		}
+
+		// when
+		actual := newDelegator(dogu, mockForwarder, mockReg)
+
+		// then
+		require.IsType(t, &doguConfigurationDelegator{}, actual)
+		assert.Equal(t, expectedDelegator, actual)
+	})
+}
 
 func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 	t.Run("should return any error during port forward", func(t *testing.T) {
@@ -99,6 +130,33 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		assert.Equal(t, actual, "dogu 'ldap' has no configuration fields\n")
 
 	})
+	t.Run("should return error when creating config editor", func(t *testing.T) {
+		// given
+		portForwarderMock := newMockPortForwarder(t)
+		portForwarderMock.EXPECT().ExecuteWithPortForward(mocks.Anything).RunAndReturn(func(payload func() error) error {
+			return payload()
+		})
+		dogu := readDoguResource(t, ldapBytes)
+		doguRegMock := newMockDoguRegistry(t)
+		doguRegMock.EXPECT().Get(testDoguName).Return(dogu, nil).Once()
+		edFactoryMock := newMockEditorFactory(t)
+		edFactoryMock.EXPECT().create().Return(nil, assert.AnError).Once()
+		sut := &doguConfigurationDelegator{
+			doguName:  testDoguName,
+			forwarder: portForwarderMock,
+			doguReg:   doguRegMock,
+			edFactory: edFactoryMock,
+		}
+
+		// when
+		err := sut.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
+			return nil
+		})
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+	})
 	t.Run("should return error from payload function", func(t *testing.T) {
 		// given
 		portForwarderMock := newMockPortForwarder(t)
@@ -108,10 +166,14 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		dogu := readDoguResource(t, ldapBytes)
 		doguRegMock := newMockDoguRegistry(t)
 		doguRegMock.EXPECT().Get(testDoguName).Return(dogu, nil)
+		editorMock := newMockDoguConfigurationEditor(t)
+		edFactoryMock := newMockEditorFactory(t)
+		edFactoryMock.EXPECT().create().Return(editorMock, nil).Once()
 		sut := &doguConfigurationDelegator{
 			doguName:  testDoguName,
 			forwarder: portForwarderMock,
 			doguReg:   doguRegMock,
+			edFactory: edFactoryMock,
 		}
 
 		// when
@@ -121,6 +183,7 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 
 		// then
 		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "error during registry interaction: ")
 	})
 	t.Run("should succeed for a reasonable dogu", func(t *testing.T) {
@@ -132,10 +195,14 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		dogu := readDoguResource(t, ldapBytes)
 		doguRegMock := newMockDoguRegistry(t)
 		doguRegMock.EXPECT().Get(testDoguName).Return(dogu, nil)
+		editorMock := newMockDoguConfigurationEditor(t)
+		edFactoryMock := newMockEditorFactory(t)
+		edFactoryMock.EXPECT().create().Return(editorMock, nil).Once()
 		sut := &doguConfigurationDelegator{
 			doguName:  testDoguName,
 			forwarder: portForwarderMock,
 			doguReg:   doguRegMock,
+			edFactory: edFactoryMock,
 		}
 
 		// when
