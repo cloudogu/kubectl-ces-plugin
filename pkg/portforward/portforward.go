@@ -51,7 +51,10 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, apiUrl)
 
 	stopCh := make(chan struct{})
-	defer close(stopCh)
+	defer func() {
+		close(stopCh)
+		fmt.Println("Closing port-forward")
+	}()
 	readyCh := make(chan struct{})
 
 	stdOut := new(bytes.Buffer)
@@ -75,12 +78,12 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 	case err := <-errCh:
 		return fmt.Errorf("could not create port-forward: %w", err)
 	case <-readyCh:
+		fmt.Println("Port forward is ready")
 	}
 
 	err = fn()
 	if err != nil {
 		return fmt.Errorf("encoutered error during port-forward; stdOut: %s; errOut: %s: %w", stdOut, errOut, err)
 	}
-
 	return nil
 }
