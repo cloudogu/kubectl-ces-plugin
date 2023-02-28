@@ -84,7 +84,8 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 
 	err = fn()
 	if err != nil {
-		return fmt.Errorf("encoutered error during port-forward; stdOut: %s; errOut: %s: %w", stdOut, errOut, err)
+		logger.GetInstance().Debugf("encountered error during port-forward; stdOut: %s; errOut: %s", stdOut, errOut)
+		return fmt.Errorf("encountered error during port-forward: %w", err)
 	}
 	return nil
 }
