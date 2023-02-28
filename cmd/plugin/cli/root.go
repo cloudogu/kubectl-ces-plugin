@@ -43,6 +43,7 @@ func RootCmd() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			logger.ConfigureLogger()
 			err := viper.BindPFlags(cmd.Flags())
 			cmd.SetErr(streams.ErrOut)
 			if err != nil {

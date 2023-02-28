@@ -74,7 +74,7 @@ func (dcd *doguConfigurationDelegator) Delegate(doguConfigCall func(dogu *core.D
 		}
 
 		if !doguConf.HasConfiguration(dogu) {
-			logger.NewLogger().Info("dogu '%s' has no configuration fields", dogu.GetSimpleName())
+			logger.GetInstance().Info("dogu '%s' has no configuration fields", dogu.GetSimpleName())
 			return nil
 		}
 

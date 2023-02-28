@@ -49,7 +49,7 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 	if err != nil {
 		return err
 	}
-	logger.NewLogger().Info("huhu")
+	logger.GetInstance().Info("huhu")
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, apiUrl)
 
 	stopCh := make(chan struct{})
