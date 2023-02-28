@@ -37,9 +37,11 @@ func RootCmd() *cobra.Command {
 	kubeResouceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
 
 	cmd := &cobra.Command{
-		Use:           "kubectl ces",
-		Short:         "",
-		Long:          `.`,
+		Use:   "kubectl ces",
+		Short: "Manage the Cloudogu EcoSystem",
+		Long: `Provides various helper to make management of the Cloudogu EcoSystem easier.
+Among others, this includes installation, updates and deletion of dogus,
+editing their configuration and applying blueprints.'`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
