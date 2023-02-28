@@ -35,8 +35,10 @@ func Test_defaultServiceFactory_create(t *testing.T) {
 		// given
 		cliConfigMock := newMockConfigTransporter(t)
 		ns := testNamespace
+		testKubeConfig := "./testdata/kubeConfig.valid"
 		flags := &genericclioptions.ConfigFlags{
-			Namespace: &ns,
+			Namespace:  &ns,
+			KubeConfig: &testKubeConfig,
 		}
 		cliConfigMock.EXPECT().Get(util.CliTransportParamK8sArgs).Return(flags).Once()
 		sut := defaultServiceFactory{cliConfig: cliConfigMock}
