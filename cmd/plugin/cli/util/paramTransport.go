@@ -4,4 +4,6 @@ package util
 const (
 	// CliTransportParamK8sArgs passes K8s kube config infos globally.
 	CliTransportParamK8sArgs = "globalK8sArgs"
+	// CliTransportLogLevel passes the log-level value (if set)
+	CliTransportLogLevel = "flagLogLevel"
 )

@@ -10,6 +10,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
 )
 
 // New creates a new port forwarder.
@@ -47,7 +49,7 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 	if err != nil {
 		return err
 	}
-
+	logger.NewLogger().Info("huhu")
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, apiUrl)
 
 	stopCh := make(chan struct{})

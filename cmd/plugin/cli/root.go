@@ -12,6 +12,11 @@ import (
 
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu-config"
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
+)
+
+const (
+	flagKeyLogLevel = logger.LogLevelKey
 )
 
 func RootCmd() *cobra.Command {
@@ -21,8 +26,14 @@ func RootCmd() *cobra.Command {
 		ErrOut: os.Stderr,
 	}
 	flags := pflag.NewFlagSet("kubectl", pflag.ExitOnError)
+
+	// Set the default log level here. Alternatively supplied values overwrite the default during the flag parsing.
+	flagValueLogLevel := logger.LogLevelWarn
+	flagLogLevelRef := &flagValueLogLevel
+	flags.Var(flagLogLevelRef, flagKeyLogLevel, "define log level")
+
 	pflag.CommandLine = flags
-	KubernetesConfigFlags := genericclioptions.NewConfigFlags(true)
+	kubernetesConfigFlags := genericclioptions.NewConfigFlags(true)
 	kubeResouceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
 
 	cmd := &cobra.Command{
@@ -43,11 +54,12 @@ func RootCmd() *cobra.Command {
 
 	cobra.OnInitialize(initConfig)
 	flags.AddFlagSet(cmd.PersistentFlags())
-	KubernetesConfigFlags.AddFlags(flags)
+	kubernetesConfigFlags.AddFlags(flags)
 	kubeResouceBuilderFlags.AddFlags(flags)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.Set(util.CliTransportParamK8sArgs, KubernetesConfigFlags)
+	viper.Set(util.CliTransportParamK8sArgs, kubernetesConfigFlags)
+	viper.Set(util.CliTransportLogLevel, flagLogLevelRef)
 
 	cmd.AddCommand(dogu_config.Cmd())
 
