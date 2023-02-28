@@ -9,6 +9,7 @@ import (
 func listCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list <dogu>",
+		Long:    `Fetch a list of possible configuration keys.`,
 		Aliases: []string{"l", "ls"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

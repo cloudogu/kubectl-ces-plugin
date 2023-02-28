@@ -9,6 +9,7 @@ import (
 func getCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "get <dogu> <config-key>",
+		Long:    `Fetch a value for a given configuration key.`,
 		Aliases: []string{"g"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

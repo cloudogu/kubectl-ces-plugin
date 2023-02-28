@@ -9,6 +9,7 @@ import (
 func setCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "set <dogu> <config-key> <config-value>",
+		Long:    `Create or update a value for a given configuration key.`,
 		Aliases: []string{"s"},
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {

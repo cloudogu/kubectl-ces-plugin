@@ -25,7 +25,7 @@ func RootCmd() *cobra.Command {
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 	}
-	flags := pflag.NewFlagSet("kubectl", pflag.ExitOnError)
+	flags := pflag.NewFlagSet("kubectl-ces", pflag.ExitOnError)
 
 	// Set the default log level here. Alternatively supplied values overwrite the default during the flag parsing.
 	flagValueLogLevel := logger.LogLevelWarn
@@ -34,14 +34,13 @@ func RootCmd() *cobra.Command {
 
 	pflag.CommandLine = flags
 	kubernetesConfigFlags := genericclioptions.NewConfigFlags(true)
-	kubeResouceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
+	kubeResourceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
 
 	cmd := &cobra.Command{
 		Use:   "kubectl ces",
 		Short: "Manage the Cloudogu EcoSystem",
-		Long: `Provides various helper to make management of the Cloudogu EcoSystem easier.
-Among others, this includes installation, updates and deletion of dogus,
-editing their configuration and applying blueprints.'`,
+		Long: `Provides various functions to make the management of the Cloudogu EcoSystem easier.
+Among others, this includes editing dogu configurations.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -58,7 +57,7 @@ editing their configuration and applying blueprints.'`,
 	cobra.OnInitialize(initConfig)
 	flags.AddFlagSet(cmd.PersistentFlags())
 	kubernetesConfigFlags.AddFlags(flags)
-	kubeResouceBuilderFlags.AddFlags(flags)
+	kubeResourceBuilderFlags.AddFlags(flags)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.Set(util.CliTransportParamK8sArgs, kubernetesConfigFlags)

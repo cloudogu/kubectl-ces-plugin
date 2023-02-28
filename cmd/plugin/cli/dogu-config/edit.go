@@ -18,6 +18,7 @@ var (
 func editCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     fmt.Sprintf("edit <dogu> [<config-key>] [-%s | --%s]", flagKeyDeleteOnEmptyShort, flagKeyDeleteOnEmptyLong),
+		Long:    `Interactively edit a dogu's configuration.`,
 		Aliases: []string{"e"},
 		Args:    cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {

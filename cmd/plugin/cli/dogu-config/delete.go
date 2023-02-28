@@ -9,6 +9,7 @@ import (
 func deleteCmd(factory serviceFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete <dogu> <config-key>",
+		Long:    `Delete a given configuration key.`,
 		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
