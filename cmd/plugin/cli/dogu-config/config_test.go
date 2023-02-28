@@ -31,4 +31,21 @@ func Test_defaultServiceFactory_create(t *testing.T) {
 		assert.Nil(t, actual)
 		assert.ErrorContains(t, err, "could not create rest config")
 	})
+	t.Run("should succeed", func(t *testing.T) {
+		// given
+		cliConfigMock := newMockConfigTransporter(t)
+		ns := testNamespace
+		flags := &genericclioptions.ConfigFlags{
+			Namespace: &ns,
+		}
+		cliConfigMock.EXPECT().Get(util.CliTransportParamK8sArgs).Return(flags).Once()
+		sut := defaultServiceFactory{cliConfig: cliConfigMock}
+
+		// when
+		actual, err := sut.create(testDoguName)
+
+		// then
+		require.NoError(t, err)
+		assert.NotNil(t, actual)
+	})
 }
