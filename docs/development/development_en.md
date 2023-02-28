@@ -1,8 +1,8 @@
-# Developing kubectl-ces-plugin
+# Developing `kubectl-ces`
 
 ## Encouraged Command Structure
 
-```shell
+```
 kubectl ces "group" "verb" "noun" "adjective"
 kubectl ces dogu-config edit redmine
 kubectl ces dogu-config delete redmine <key>

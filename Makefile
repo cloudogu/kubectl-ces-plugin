@@ -1,5 +1,5 @@
 # Set these to the desired values
-ARTIFACT_ID=kubectl-ces-plugin
+ARTIFACT_ID=kubectl-ces
 VERSION=0.0.1
 
 GOTAG=1.18.6
