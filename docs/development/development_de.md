@@ -1,14 +1,14 @@
-# Developing `kubectl-ces`
+# `kubectl-ces` entwickeln
 
-## Encouraged Command Structure
+## Empfohlene Befehlsstruktur
 
-The used CLI framework [github.com/spf13/cobra](https://github.com/spf13/cobra) provides a handy convention on how to structure a CLI commands:
+Das verwendete CLI-Framework [github.com/spf13/cobra](https://github.com/spf13/cobra) bietet eine praktische Konvention für die Strukturierung von CLI-Befehlen:
 > APPNAME VERB NOUN --ADJECTIVE
 
-Anyhow, this plug-in will most likely deal with a large enough bandwidth of use cases for this plugin to enhance this command structure. To provide a matching narrative for different use cases the structure adds a GROUP command:
+Allerdings wird dieses Plugin höchstwahrscheinlich mit einer ausreichenden Bandbreite an Anwendungsfällen zu tun haben, als dass die genannte Befehlsstruktur dafür ausreicht. Um eine passende Entsprechung für verschiedene Anwendungsfälle zu liefern, wird zusätzlich die Command-Struktur um einen GROUP-Befehl erweitert:
 > kubectl ces GROUP VERB NOUN --ADJECTIVE
 
-This enables to keep an easily understandable command structure and enables use cases like these (some may not be implemented yet):
+Dies ermöglicht es, eine leicht verständliche Befehlsstruktur beizubehalten, sodass Anwendungsfälle wie diese (einige sind möglicherweise noch nicht implementiert) in einem erlernbaren Rahmen bleibt:
 
 ```
 kubectl ces dogu-config edit redmine

@@ -3,7 +3,9 @@
 ## Installation
 
 1. Install [Krew](https://krew.sigs.k8s.io/docs/user-guide/setup/install/)
-1. Run `kubectl krew install ces`
+1. Run `kubectl krew install ces` to install the plug-in
+
+After that, the plug-in is operational.
 
 ## Usage
 
