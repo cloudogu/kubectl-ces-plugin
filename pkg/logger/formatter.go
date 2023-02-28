@@ -17,7 +17,7 @@ const (
 	modulePathPattern = `(v\d+/)?`
 )
 
-var loggerFilePathPattern = fmt.Sprintf("cesapp/%slogging/logger.go", modulePathPattern)
+var loggerFilePathPattern = fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/logger.go", modulePathPattern)
 
 // Formatter - logrus formatter, implements logrus.Formatter
 type Formatter struct {

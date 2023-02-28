@@ -6,7 +6,6 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/doguConf"
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/keys"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
 )
 
 type doguConfigurationDelegator struct {
@@ -74,7 +73,7 @@ func (dcd *doguConfigurationDelegator) Delegate(doguConfigCall func(dogu *core.D
 		}
 
 		if !doguConf.HasConfiguration(dogu) {
-			logger.GetInstance().Info("dogu '%s' has no configuration fields", dogu.GetSimpleName())
+			fmt.Printf("dogu '%s' has no configuration fields\n", dogu.GetSimpleName())
 			return nil
 		}
 

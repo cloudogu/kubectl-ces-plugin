@@ -117,7 +117,7 @@ func Test_doguConfigurationDelegator_Delegate(t *testing.T) {
 		// then
 		actual := captureOutput(fakeReaderPipe, fakeWriterPipe, realStdout)
 		require.NoError(t, err)
-		assert.Equal(t, actual, "dogu 'ldap' has no configuration fields\n")
+		assert.Equal(t, "dogu 'ldap' has no configuration fields\n", actual)
 
 	})
 	t.Run("should return error when creating config editor", func(t *testing.T) {

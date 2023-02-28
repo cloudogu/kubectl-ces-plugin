@@ -14,8 +14,10 @@ import (
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
 )
 
+// LogLevelKey identifies
 const LogLevelKey = "log-level"
 
+// CLI log level strings
 const (
 	LogLevelError LogLevel = "error"
 	LogLevelWarn  LogLevel = "warn"
@@ -23,7 +25,7 @@ const (
 	LogLevelDebug LogLevel = "debug"
 )
 
-// logrus log level
+// logrus log levels
 const (
 	errorLevel int = iota
 	warningLevel
@@ -32,28 +34,26 @@ const (
 )
 
 var (
-	loggerInstance *CesappLogger
+	loggerInstance *NamedLogger
 	formatter      = createFormatter()
 )
 
-type CesappLogger struct {
-	logger *logrus.Logger
+func init() {
+	initLoggerWithThrowAway()
 }
 
-func init() {
-	loggerInstance = NewCesappLogger()
+func initLoggerWithThrowAway() {
+	// the loggers-to-be-used are instantiated later on when the CLI log level flags have been parsed
+	log := logrus.New()
+	namedLog := &NamedLogger{logger: log, name: "throwAway"}
+	loggerInstance = namedLog
 	core.GetLogger = func() core.Logger {
-		return GetInstance()
+		return namedLog
 	}
 }
 
-func GetInstance() logrus.FieldLogger {
+func GetInstance() *NamedLogger {
 	return loggerInstance
-}
-
-func NewCesappLogger() *CesappLogger {
-	throwAwayLogger := logrus.New()
-	return &CesappLogger{logger: throwAwayLogger}
 }
 
 func createFormatter() Formatter {
@@ -91,14 +91,15 @@ func getLogLevelFromEnv() logrus.Level {
 	}
 }
 
+// LogLevel implements a CLI flag.
 type LogLevel string
 
-// String returns the stringn value of a log level.
+// String returns the string value of a log level flag.
 func (ll *LogLevel) String() string {
 	return string(*ll)
 }
 
-// Set must have pointer receiver so it doesn't change the value of a copy
+// Set stores the given flag value.
 func (ll *LogLevel) Set(v string) error {
 	switch v {
 	case string(LogLevelError), string(LogLevelWarn), string(LogLevelInfo), string(LogLevelDebug):
@@ -109,178 +110,78 @@ func (ll *LogLevel) Set(v string) error {
 	}
 }
 
-// Type is only used in help text
+// Type returns the type of the CLI flag
 func (ll *LogLevel) Type() string {
 	return LogLevelKey
 }
 
-type libraryLogger struct {
+// NamedLogger provides log facilities that can be replaced during runtime.
+type NamedLogger struct {
 	logger *logrus.Logger
 	name   string
 }
 
-func (ll *libraryLogger) log(level int, args ...interface{}) {
+func (ll *NamedLogger) log(level int, args ...interface{}) {
 	ll.logger.Info(level, fmt.Sprintf("[%s] %s", ll.name, fmt.Sprint(args...)))
 }
 
-func (ll *libraryLogger) logf(level int, format string, args ...interface{}) {
+func (ll *NamedLogger) logf(level int, format string, args ...interface{}) {
 	ll.logger.Info(level, fmt.Sprintf("[%s] %s", ll.name, fmt.Sprintf(format, args...)))
 }
 
-func (ll *libraryLogger) Debug(args ...interface{}) {
+// Debug logs a message with debug level.
+func (ll *NamedLogger) Debug(args ...interface{}) {
 	ll.log(debugLevel, args...)
 }
 
-func (ll *libraryLogger) Info(args ...interface{}) {
+// Info logs a message with info level.
+func (ll *NamedLogger) Info(args ...interface{}) {
 	ll.log(infoLevel, args...)
 }
 
-func (ll *libraryLogger) Warning(args ...interface{}) {
+// Warning logs a message with warn level.
+func (ll *NamedLogger) Warning(args ...interface{}) {
 	ll.log(warningLevel, args...)
 }
 
-func (ll *libraryLogger) Error(args ...interface{}) {
+// Error logs a message with error level.
+func (ll *NamedLogger) Error(args ...interface{}) {
 	ll.log(errorLevel, args...)
 }
 
-func (ll *libraryLogger) Debugf(format string, args ...interface{}) {
+// Debugf logs a printf-style message with debug level.
+func (ll *NamedLogger) Debugf(format string, args ...interface{}) {
 	ll.logf(debugLevel, format, args...)
 }
 
-func (ll *libraryLogger) Infof(format string, args ...interface{}) {
+// Infof logs a printf-style message with info level.
+func (ll *NamedLogger) Infof(format string, args ...interface{}) {
 	ll.logf(infoLevel, format, args...)
 }
 
-func (ll *libraryLogger) Warningf(format string, args ...interface{}) {
+// Warningf logs a printf-style message with warn level.
+func (ll *NamedLogger) Warningf(format string, args ...interface{}) {
 	ll.logf(warningLevel, format, args...)
 }
 
-func (ll *libraryLogger) Errorf(format string, args ...interface{}) {
+// Errorf logs a printf-style message with error level.
+func (ll *NamedLogger) Errorf(format string, args ...interface{}) {
 	ll.logf(errorLevel, format, args...)
 }
 
+// ConfigureLogger sets up both the logging framework native to this application as well to used libraries.
 func ConfigureLogger() {
 	level := getLogLevelFromEnv()
 
-	// create logrus logger that can be styled and formatted
 	logrusLog := logrus.New()
 	logrusLog.SetFormatter(&logrus.TextFormatter{})
 	logrusLog.SetLevel(level)
 
-	// set custom logger implementation to cesapp-lib logger
-	cesappLibLogger := libraryLogger{name: "cesapp-lib", logger: logrusLog}
+	loggerInstance = &NamedLogger{name: "kubectl-ces", logger: logrusLog}
+
+	cesappLibLogger := &NamedLogger{name: "cesapp-lib", logger: logrusLog}
+	// overwrite cesapp-lib logger with our own custom logger implementation to gain logs from cesapp-lib
 	core.GetLogger = func() core.Logger {
-		return &cesappLibLogger
+		return cesappLibLogger
 	}
-}
-
-func (c *CesappLogger) WithField(key string, value interface{}) *logrus.Entry {
-	return c.logger.WithField(key, value)
-}
-
-func (c *CesappLogger) WithFields(fields logrus.Fields) *logrus.Entry {
-	return c.logger.WithFields(fields)
-}
-
-func (c *CesappLogger) WithError(err error) *logrus.Entry {
-	return c.logger.WithError(err)
-}
-
-func (c *CesappLogger) Debugf(format string, args ...interface{}) {
-	c.logger.Debugf(format, args...)
-}
-
-func (c *CesappLogger) Infof(format string, args ...interface{}) {
-	c.logger.Infof(format, args...)
-}
-
-func (c *CesappLogger) Printf(format string, args ...interface{}) {
-	fmt.Printf(format, args...)
-	c.logger.Tracef(format, args...)
-}
-
-func (c *CesappLogger) Warnf(format string, args ...interface{}) {
-	c.logger.Warnf(format, args...)
-}
-
-func (c *CesappLogger) Warningf(format string, args ...interface{}) {
-	c.logger.Warningf(format, args...)
-}
-
-func (c *CesappLogger) Errorf(format string, args ...interface{}) {
-	c.logger.Errorf(format, args...)
-}
-
-func (c *CesappLogger) Fatalf(format string, args ...interface{}) {
-	c.logger.Fatalf(format, args...)
-}
-
-func (c *CesappLogger) Panicf(format string, args ...interface{}) {
-	c.logger.Panicf(format, args...)
-}
-
-func (c *CesappLogger) Debug(args ...interface{}) {
-	c.logger.Debug(args...)
-}
-
-func (c *CesappLogger) Info(args ...interface{}) {
-	c.logger.Info(args...)
-}
-
-func (c *CesappLogger) Print(args ...interface{}) {
-	fmt.Print(args...)
-	c.logger.Trace(args...)
-}
-
-func (c *CesappLogger) Warn(args ...interface{}) {
-	c.logger.Warn(args...)
-}
-
-func (c *CesappLogger) Warning(args ...interface{}) {
-	c.logger.Warning(args...)
-}
-
-func (c *CesappLogger) Error(args ...interface{}) {
-	c.logger.Error(args...)
-}
-
-func (c *CesappLogger) Fatal(args ...interface{}) {
-	c.logger.Fatal(args...)
-}
-
-func (c *CesappLogger) Panic(args ...interface{}) {
-	c.logger.Panic(args...)
-}
-
-func (c *CesappLogger) Debugln(args ...interface{}) {
-	c.logger.Debugln(args...)
-}
-
-func (c *CesappLogger) Infoln(args ...interface{}) {
-	c.logger.Infoln(args...)
-}
-
-func (c *CesappLogger) Println(args ...interface{}) {
-	fmt.Println(args...)
-	c.logger.Traceln(args...)
-}
-
-func (c *CesappLogger) Warnln(args ...interface{}) {
-	c.logger.Warnln(args...)
-}
-
-func (c *CesappLogger) Warningln(args ...interface{}) {
-	c.logger.Warningln(args...)
-}
-
-func (c *CesappLogger) Errorln(args ...interface{}) {
-	c.logger.Errorln(args...)
-}
-
-func (c *CesappLogger) Fatalln(args ...interface{}) {
-	c.logger.Fatalln(args...)
-}
-
-func (c *CesappLogger) Panicln(args ...interface{}) {
-	c.logger.Panicln(args...)
 }

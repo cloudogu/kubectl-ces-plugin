@@ -9,7 +9,7 @@ import (
 )
 
 func Test_getFrame(t *testing.T) {
-	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("cesapp/%slogging/formatter.go", modulePathPattern)
+	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/formatter.go", modulePathPattern)
 	filePathExpression, err := regexp.Compile(testDelegateMethodeOneFrameBeforeThisFramesTest)
 	require.NoError(t, err)
 
@@ -17,7 +17,7 @@ func Test_getFrame(t *testing.T) {
 	frameForThisLine := getFrame(*filePathExpression)
 
 	// then
-	require.Contains(t, frameForThisLine.File, "cesapp/logging/formatter_test.go")
+	require.Contains(t, frameForThisLine.File, "kubectl-ces-plugin/pkg/logger/formatter_test.go")
 	// asserting a specific line in source code makes this test error prone
 	// but it's really unlikely that the line number is zero if the function did right
 	require.NotEmpty(t, frameForThisLine.Line)
@@ -27,7 +27,7 @@ func Test_loggerFilePathPattern(t *testing.T) {
 	testExpression, err := regexp.Compile(loggerFilePathPattern)
 	require.NoError(t, err)
 	t.Run("should match path if used in cesapp", func(t *testing.T) {
-		testPath := "cesapp/logging/logger.go"
+		testPath := "kubectl-ces-plugin/pkg/logger/logger.go"
 
 		foundMatch := testExpression.MatchString(testPath)
 
@@ -35,7 +35,7 @@ func Test_loggerFilePathPattern(t *testing.T) {
 	})
 
 	t.Run("should match path if used as module", func(t *testing.T) {
-		testPath := "cesapp/v2/logging/logger.go"
+		testPath := "kubectl-ces-plugin/pkg/logger/logger.go"
 
 		foundMatch := testExpression.MatchString(testPath)
 

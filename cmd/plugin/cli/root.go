@@ -30,7 +30,7 @@ func RootCmd() *cobra.Command {
 	// Set the default log level here. Alternatively supplied values overwrite the default during the flag parsing.
 	flagValueLogLevel := logger.LogLevelWarn
 	flagLogLevelRef := &flagValueLogLevel
-	flags.Var(flagLogLevelRef, flagKeyLogLevel, "define log level")
+	flags.Var(flagLogLevelRef, flagKeyLogLevel, "define the log level")
 
 	pflag.CommandLine = flags
 	kubernetesConfigFlags := genericclioptions.NewConfigFlags(true)

@@ -49,13 +49,12 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 	if err != nil {
 		return err
 	}
-	logger.GetInstance().Info("huhu")
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, apiUrl)
 
 	stopCh := make(chan struct{})
 	defer func() {
 		close(stopCh)
-		fmt.Println("Closing port-forward")
+		logger.GetInstance().Info("Closing port-forward")
 	}()
 	readyCh := make(chan struct{})
 
@@ -67,7 +66,7 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 		return err
 	}
 
-	fmt.Printf("Starting port-forward %d:%d\n", kpf.localPort, kpf.clusterPort)
+	logger.GetInstance().Infof("Starting port-forward %d:%d\n", kpf.localPort, kpf.clusterPort)
 
 	errCh := make(chan error)
 	go func() {
@@ -80,7 +79,7 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 	case err := <-errCh:
 		return fmt.Errorf("could not create port-forward: %w", err)
 	case <-readyCh:
-		fmt.Println("Port forward is ready")
+		logger.GetInstance().Info("Port forward is ready")
 	}
 
 	err = fn()
