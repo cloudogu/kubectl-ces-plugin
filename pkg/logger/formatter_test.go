@@ -8,8 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const additionalCIPathPattern = "(_.+)?"
+
 func Test_getFrame(t *testing.T) {
-	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/formatter.go", optionalVersionedModulePathPattern)
+	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("kubectl-ces-plugin%s/pkg/%slogger/formatter.go", additionalCIPathPattern, optionalVersionedModulePathPattern)
 	filePathExpression, err := regexp.Compile(testDelegateMethodeOneFrameBeforeThisFramesTest)
 	require.NoError(t, err)
 
