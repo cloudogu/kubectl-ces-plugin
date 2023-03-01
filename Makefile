@@ -56,10 +56,10 @@ $(DARWIN_TARGET):
 .PHONY: compile-crossplatform
 compile-crossplatform:  ## Compile the plugin for linux, windows and darwin.
 	@make -e ${LINUX_TARGET}/${ARTIFACT_ID}
-	@make -e ${WINDOWS_TARGET}/${ARTIFACT_ID}
+	@make -e ${WINDOWS_TARGET}/${ARTIFACT_ID}.exe
 	@make -e ${DARWIN_TARGET}/${ARTIFACT_ID}
 
-$(LINUX_TARGET)/$(ARTIFACT_ID): $(SRC) $(LINUX_TARGET)
+${LINUX_TARGET}/${ARTIFACT_ID}: $(SRC) $(LINUX_TARGET)
 	GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_LINUX}" \
     		${ENV_CGO_ENABLED} \
     		${ENV_GOARCH} \
@@ -67,7 +67,7 @@ $(LINUX_TARGET)/$(ARTIFACT_ID): $(SRC) $(LINUX_TARGET)
     		${ENV_BINARY_LINUX} \
 		make -e compile
 
-$(WINDOWS_TARGET)/$(ARTIFACT_ID): $(SRC) $(WINDOWS_TARGET)
+${WINDOWS_TARGET}/${ARTIFACT_ID}.exe: $(SRC) $(WINDOWS_TARGET)
 	GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_WINDOWS}" \
     		${ENV_CGO_ENABLED} \
     		${ENV_GOARCH} \
@@ -75,7 +75,7 @@ $(WINDOWS_TARGET)/$(ARTIFACT_ID): $(SRC) $(WINDOWS_TARGET)
     		${ENV_BINARY_WINDOWS} \
 	  	make -e compile
 
-$(DARWIN_TARGET)/$(ARTIFACT_ID): $(SRC) $(DARWIN_TARGET)
+${DARWIN_TARGET}/${ARTIFACT_ID}: $(SRC) $(DARWIN_TARGET)
 	GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_DARWIN}" \
 		${ENV_CGO_ENABLED} \
 		${ENV_GOARCH} \
@@ -83,17 +83,35 @@ $(DARWIN_TARGET)/$(ARTIFACT_ID): $(SRC) $(DARWIN_TARGET)
 		${ENV_BINARY_DARWIN} \
 		make -e compile
 
+.PHONY: create-krew-archives
+create-krew-archives: ${LINUX_TARGET}/${ARTIFACT_ID} ${WINDOWS_TARGET}/${ARTIFACT_ID}.exe ${DARWIN_TARGET}/${ARTIFACT_ID}
+	@cp LICENSE ${LINUX_TARGET}
+	@cd ${LINUX_TARGET} && tar -czvf "${ARTIFACT_ID}_linux_${GOARCH}.tar.gz" *
+	@cp LICENSE ${WINDOWS_TARGET}
+	@cd ${WINDOWS_TARGET} && zip "${ARTIFACT_ID}_windows_${GOARCH}.zip" *
+	@cp LICENSE ${DARWIN_TARGET}
+	@cd ${DARWIN_TARGET} && tar -czvf "${ARTIFACT_ID}_darwin_${GOARCH}.tar.gz" *
+
+
 .PHONY: update-krew-version
 update-krew-version: ## Update the kubectl plugin manifest with the current artefact version.
-	@yq ".spec.version |= \"${VERSION}\"" ${KREW_MANIFEST} > ${KREW_MANIFEST}.tmp
-	@cp ${KREW_MANIFEST}.tmp ${KREW_MANIFEST}
-	@rm ${KREW_MANIFEST}.tmp
+	@yq -i ".spec.version |= \"${VERSION}\"" ${KREW_MANIFEST}
 
-KREW_ARCHIVE_CHECKSUMS=target/kubectl-ces_linux_amd64.tar.gz target/kubectl-ces_windows_amd64.zip target/kubectl-ces_darwin_amd64.tar.gz
+KREW_ARCHIVE_CHECKSUMS=target/linux/kubectl-ces_linux_amd64.tar.gz target/windows/kubectl-ces_windows_amd64.zip target/darwin/kubectl-ces_darwin_amd64.tar.gz
 
-$(BIN_CHECKSUMS): $(TARGET_DIR)
+.PHONY: update-krew-checksums
+update-krew-checksums:
 	@echo "Generating Checksums"
-	@cd $(TARGET_DIR); find . -maxdepth 1 -not -type d | egrep -v ".(sha256sum|asc)$$" | xargs shasum -a 256 > $$(basename $@)
+
+	export SHA256_LINUX="$$(sha256sum target/linux/kubectl-ces_linux_amd64.tar.gz | awk {'print $$1'})" ; \
+	yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"linux\").sha256=\"$${SHA256_LINUX}\"" deploy/krew/plugin.yaml
+
+	export SHA256_WINDOWS="$$(sha256sum target/windows/kubectl-ces_windows_amd64.zip | awk {'print $$1'})" ; \
+	yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"windows\").sha256=\"$${SHA256_WINDOWS}\"" deploy/krew/plugin.yaml
+
+	export SHA256_DARWIN="$$(sha256sum target/darwin/kubectl-ces_darwin_amd64.tar.gz | awk {'print $$gen1'})" ; \
+	yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"darwin\").sha256=\"$${SHA256_DARWIN}\"" deploy/krew/plugin.yaml
+
 
 ##@ Compiling go software
 

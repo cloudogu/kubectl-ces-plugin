@@ -10,21 +10,21 @@ spec:
           os: linux
           arch: amd64
       uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/kubectl-ces_linux_amd64.tar.gz
-      sha256: ""
+      sha256: "0b3cbd0a758eb1be522746609aab349f5d65652bc9cc6c82875f0ace54925276"
       bin: "kubectl-ces"
     - selector:
         matchLabels:
           os: darwin
           arch: amd64
       uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/kubectl-ces_darwin_amd64.tar.gz
-      sha256: ""
+      sha256: "65657b4c88add6e859e0f49b3d0dfe21b3d27578633e23bfdcc17f2fea53f651"
       bin: "kubectl-ces"
     - selector:
         matchLabels:
           os: windows
           arch: amd64
       uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/kubectl-ces_windows_amd64.zip
-      sha256: ""
+      sha256: "ae09efd074c251d28dd7a4fcb9834af69ecebc441805b65e830b32e778e2d7e5"
       bin: "kubectl-ces.exe"
   shortDescription: A new plugin
   homepage: https://github.com/cloudogu/kubectl-ces-plugin
