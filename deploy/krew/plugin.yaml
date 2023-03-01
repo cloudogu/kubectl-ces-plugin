@@ -1,7 +1,7 @@
 apiVersion: krew.googlecontainertools.github.com/v1alpha2
 kind: Plugin
 metadata:
-  name: ces
+  name: kubectl-ces
 spec:
   version: "v0.1.0"
   platforms:
@@ -9,38 +9,38 @@ spec:
         matchLabels:
           os: linux
           arch: amd64
-      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_linux_amd64.tar.gz
+      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/kubectl-ces_linux_amd64.tar.gz
       sha256: ""
       files:
-        - from: "./ces"
+        - from: "./kubectl-ces"
           to: "."
         - from: LICENSE
           to: "."
-      bin: "ces"
+      bin: "kubectl-ces"
     - selector:
         matchLabels:
           os: darwin
           arch: amd64
-      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_darwin_amd64.tar.gz
+      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/kubectl-ces_darwin_amd64.tar.gz
       sha256: ""
       files:
-        - from: "./ces"
+        - from: "./kubectl-ces"
           to: "."
         - from: LICENSE
           to: "."
-      bin: "ces"
+      bin: "kubectl-ces"
     - selector:
         matchLabels:
           os: windows
           arch: amd64
-      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_windows_amd64.zip
+      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/kubectl-ces_windows_amd64.zip
       sha256: ""
       files:
-        - from: "/ces.exe"
+        - from: "/kubectl-ces.exe"
           to: "."
         - from: LICENSE
           to: "."
-      bin: "ces.exe"
+      bin: "kubectl-ces.exe"
   shortDescription: A new plugin
   homepage: https://github.com/cloudogu/kubectl-ces-plugin
   caveats: |
