@@ -174,6 +174,7 @@ func getFrame(loggerFileNameExpression regexp.Regexp) *runtime.Frame {
 		for more, frameIndex := true, 0; more && frameIndex <= fallBackExitAtFrameIndex; frameIndex++ {
 			var frameCandidate runtime.Frame
 			frameCandidate, more = frames.Next()
+			println("*** getFrame candidate: " + frameCandidate.File)
 
 			// searching our log delegate method is the fix point that shows us the relation to the original caller
 			if !logDelegateMethodFound {
@@ -184,7 +185,7 @@ func getFrame(loggerFileNameExpression regexp.Regexp) *runtime.Frame {
 			}
 
 			if logDelegateMethodFound {
-				// previous continue found the frame before the original caller. So this frame must contain the original caller
+				// the previous "continue" call found the frame before the original caller. So this frame must contain the original caller
 				frame = frameCandidate
 				break
 			}
