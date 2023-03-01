@@ -18,13 +18,19 @@ DARWIN_TARGET=$(TARGET_DIR)/darwin
 
 ENV_CGO_ENABLED=CGO_ENABLED=0
 ENV_GOARCH=GOARCH=${GOARCH}
-
 ENV_GOOS_LINUX=GOOS=linux
-ENV_BINARY_LINUX=BINARY=${LINUX_TARGET}/${ARTIFACT_ID}
 ENV_GOOS_WINDOWS=GOOS=windows
-ENV_BINARY_WINDOWS=BINARY=${WINDOWS_TARGET}/${ARTIFACT_ID}.exe
 ENV_GOOS_DARWIN=GOOS=darwin
-ENV_BINARY_DARWIN=BINARY=${DARWIN_TARGET}/${ARTIFACT_ID}
+ENV_BINARY_LINUX=BINARY=${BINARY_LINUX}
+ENV_BINARY_WINDOWS=BINARY=${BINARY_WINDOWS}
+ENV_BINARY_DARWIN=BINARY=${BINARY_DARWIN}
+
+BINARY_LINUX=${LINUX_TARGET}/${ARTIFACT_ID}
+BINARY_WINDOWS=${WINDOWS_TARGET}/${ARTIFACT_ID}.exe
+BINARY_DARWIN=${DARWIN_TARGET}/${ARTIFACT_ID}
+KREW_ARCHIVE_LINUX=${ARTIFACT_ID}_linux_${GOARCH}.tar.gz
+KREW_ARCHIVE_WINDOWS=${ARTIFACT_ID}_windows_${GOARCH}.zip
+KREW_ARCHIVE_DARWIN=${ARTIFACT_ID}_darwin_${GOARCH}.tar.gz
 
 KREW_MANIFEST=deploy/krew/plugin.yaml
 
@@ -41,8 +47,6 @@ include build/make/test-unit.mk
 include build/make/mocks.mk
 include build/make/static-analysis.mk
 include build/make/clean.mk
-include build/make/package-debian.mk
-include build/make/deploy-debian.mk
 include build/make/digital-signature.mk
 include build/make/release.mk
 
@@ -59,58 +63,68 @@ compile-crossplatform:  ## Compile the plugin for linux, windows and darwin.
 	@make -e ${WINDOWS_TARGET}/${ARTIFACT_ID}.exe
 	@make -e ${DARWIN_TARGET}/${ARTIFACT_ID}
 
-${LINUX_TARGET}/${ARTIFACT_ID}: $(SRC) $(LINUX_TARGET)
-	GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_LINUX}" \
+${BINARY_LINUX}: $(SRC) $(LINUX_TARGET)
+	@echo "Compiling $@"
+	@GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_LINUX}" \
     		${ENV_CGO_ENABLED} \
     		${ENV_GOARCH} \
     		${ENV_GOOS_LINUX} \
     		${ENV_BINARY_LINUX} \
 		make -e compile
 
-${WINDOWS_TARGET}/${ARTIFACT_ID}.exe: $(SRC) $(WINDOWS_TARGET)
-	GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_WINDOWS}" \
+${BINARY_WINDOWS}: $(SRC) $(WINDOWS_TARGET)
+	@echo "Compiling $@"
+	@GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_WINDOWS}" \
     		${ENV_CGO_ENABLED} \
     		${ENV_GOARCH} \
     		${ENV_GOOS_WINDOWS} \
     		${ENV_BINARY_WINDOWS} \
 	  	make -e compile
 
-${DARWIN_TARGET}/${ARTIFACT_ID}: $(SRC) $(DARWIN_TARGET)
-	GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_DARWIN}" \
+${BINARY_DARWIN}: $(SRC) $(DARWIN_TARGET)
+	@echo "Compiling $@"
+	@GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_DARWIN}" \
 		${ENV_CGO_ENABLED} \
 		${ENV_GOARCH} \
 		${ENV_GOOS_DARWIN} \
 		${ENV_BINARY_DARWIN} \
 		make -e compile
 
-.PHONY: create-krew-archives
-create-krew-archives: ${LINUX_TARGET}/${ARTIFACT_ID} ${WINDOWS_TARGET}/${ARTIFACT_ID}.exe ${DARWIN_TARGET}/${ARTIFACT_ID}
-	@cp LICENSE ${LINUX_TARGET}
-	@cd ${LINUX_TARGET} && tar -czvf "${ARTIFACT_ID}_linux_${GOARCH}.tar.gz" *
-	@cp LICENSE ${WINDOWS_TARGET}
-	@cd ${WINDOWS_TARGET} && zip "${ARTIFACT_ID}_windows_${GOARCH}.zip" *
-	@cp LICENSE ${DARWIN_TARGET}
-	@cd ${DARWIN_TARGET} && tar -czvf "${ARTIFACT_ID}_darwin_${GOARCH}.tar.gz" *
 
+## Managing KREW plugin generation
+
+.PHONY: create-krew-archives
+create-krew-archives: ${KREW_ARCHIVE_LINUX} ${KREW_ARCHIVE_WINDOWS} ${KREW_ARCHIVE_DARWIN} ## Create KREW archives for all supported OSs.
+
+${KREW_ARCHIVE_LINUX}: ${BINARY_LINUX}
+	@cp LICENSE ${LINUX_TARGET}
+	@cd ${LINUX_TARGET} && tar -czvf $@ * > /dev/null
+
+${KREW_ARCHIVE_WINDOWS}: ${BINARY_WINDOWS}
+	@cp LICENSE ${WINDOWS_TARGET}
+	@cd ${WINDOWS_TARGET} && zip $@ * > /dev/null
+
+${KREW_ARCHIVE_DARWIN}: ${BINARY_DARWIN}
+	@cp LICENSE ${DARWIN_TARGET}
+	@cd ${DARWIN_TARGET} && tar -czvf $@ * > /dev/null
 
 .PHONY: update-krew-version
 update-krew-version: ## Update the kubectl plugin manifest with the current artefact version.
 	@yq -i ".spec.version |= \"${VERSION}\"" ${KREW_MANIFEST}
 
-KREW_ARCHIVE_CHECKSUMS=target/linux/kubectl-ces_linux_amd64.tar.gz target/windows/kubectl-ces_windows_amd64.zip target/darwin/kubectl-ces_darwin_amd64.tar.gz
-
 .PHONY: update-krew-checksums
-update-krew-checksums:
+update-krew-checksums:  ${KREW_ARCHIVE_LINUX} ${KREW_ARCHIVE_WINDOWS} ${KREW_ARCHIVE_DARWIN} ## Update SHA256 checksums in the KREW manifest.
 	@echo "Generating Checksums"
 
-	export SHA256_LINUX="$$(sha256sum target/linux/kubectl-ces_linux_amd64.tar.gz | awk {'print $$1'})" ; \
-	yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"linux\").sha256=\"$${SHA256_LINUX}\"" deploy/krew/plugin.yaml
+	@export SHA256_LINUX="$$(sha256sum ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} | awk {'print $$1'})" ; \
+		# update field sha256 with checksum whose sibling element match the value "linux" \
+		yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"linux\").sha256=\"$${SHA256_LINUX}\"" deploy/krew/plugin.yaml
 
-	export SHA256_WINDOWS="$$(sha256sum target/windows/kubectl-ces_windows_amd64.zip | awk {'print $$1'})" ; \
-	yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"windows\").sha256=\"$${SHA256_WINDOWS}\"" deploy/krew/plugin.yaml
+	@export SHA256_WINDOWS="$$(sha256sum ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} | awk {'print $$1'})" ; \
+		yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"windows\").sha256=\"$${SHA256_WINDOWS}\"" deploy/krew/plugin.yaml
 
-	export SHA256_DARWIN="$$(sha256sum target/darwin/kubectl-ces_darwin_amd64.tar.gz | awk {'print $$gen1'})" ; \
-	yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"darwin\").sha256=\"$${SHA256_DARWIN}\"" deploy/krew/plugin.yaml
+	@export SHA256_DARWIN="$$(sha256sum ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} | awk {'print $$1'})" ; \
+		yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"darwin\").sha256=\"$${SHA256_DARWIN}\"" deploy/krew/plugin.yaml
 
 
 ##@ Compiling go software
@@ -128,7 +142,7 @@ else
 
 $(BINARY): $(SRC) vendor $(PASSWD) $(ETCGROUP) $(HOME_DIR) $(PRE_COMPILE)
 	@echo "Building locally (in Docker)"
-	docker run --rm \
+	@docker run --rm \
 		-e GOOS="${GOOS}" \
 		-e GOARCH="${GOARCH}" \
 		-e BINARY="${BINARY}" \
@@ -142,6 +156,6 @@ $(BINARY): $(SRC) vendor $(PASSWD) $(ETCGROUP) $(HOME_DIR) $(PRE_COMPILE)
 		$(CUSTOM_GO_MOUNT) \
 		-w /go/src/github.com/cloudogu/$(ARTIFACT_ID) \
 		$(GOIMAGE):$(GOTAG) \
-  go build $(GO_BUILD_FLAGS) -o $(BINARY)
+		go build $(GO_BUILD_FLAGS) -o $(BINARY)
 
 endif
