@@ -1,6 +1,6 @@
 # Set these to the desired values
 ARTIFACT_ID=kubectl-ces
-VERSION=0.0.1
+VERSION=v0.1.0
 
 GOTAG=1.18.6
 MAKEFILES_VERSION=7.5.0
@@ -8,6 +8,8 @@ MAKEFILES_VERSION=7.5.0
 .DEFAULT_GOAL:=help
 
 BINARY=
+
+KREW_MANIFEST=deploy/krew/plugin.yaml
 
 include build/make/variables.mk
 GOMODULES=on
@@ -27,3 +29,9 @@ include build/make/package-debian.mk
 include build/make/deploy-debian.mk
 include build/make/digital-signature.mk
 include build/make/release.mk
+
+.PHONY: update-krew-version
+update-krew-version: ## Update the kubectl plugin manifest with the current artefact version.
+	@yq ".spec.version |= \"${VERSION}\"" ${KREW_MANIFEST} > ${KREW_MANIFEST}.tmp
+	@cp ${KREW_MANIFEST}.tmp ${KREW_MANIFEST}
+	@rm ${KREW_MANIFEST}.tmp

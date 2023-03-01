@@ -5,42 +5,42 @@ metadata:
 spec:
   version: "v0.1.0"
   platforms:
-  - selector:
-      matchLabels:
-        os: linux
-        arch: amd64
-    uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_linux_amd64.tar.gz
-    sha256: ""
-    files:
-    - from: "./ces"
-      to: "."
-    - from: LICENSE
-      to: "."
-    bin: "ces"
-  - selector:
-      matchLabels:
-        os: darwin
-        arch: amd64
-    uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_darwin_amd64.tar.gz
-    sha256: ""
-    files:
-    - from: "./ces"
-      to: "."
-    - from: LICENSE
-      to: "."
-    bin: "ces"
-  - selector:
-      matchLabels:
-        os: windows
-        arch: amd64
-    uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_windows_amd64.zip
-    sha256: ""
-    files:
-    - from: "/ces.exe"
-      to: "."
-    - from: LICENSE
-      to: "."
-    bin: "ces.exe"
+    - selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_linux_amd64.tar.gz
+      sha256: ""
+      files:
+        - from: "./ces"
+          to: "."
+        - from: LICENSE
+          to: "."
+      bin: "ces"
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_darwin_amd64.tar.gz
+      sha256: ""
+      files:
+        - from: "./ces"
+          to: "."
+        - from: LICENSE
+          to: "."
+      bin: "ces"
+    - selector:
+        matchLabels:
+          os: windows
+          arch: amd64
+      uri: https://github.com/cloudogu/kubectl-ces-plugin/releases/download/v0.1.0/ces_windows_amd64.zip
+      sha256: ""
+      files:
+        - from: "/ces.exe"
+          to: "."
+        - from: LICENSE
+          to: "."
+      bin: "ces.exe"
   shortDescription: A new plugin
   homepage: https://github.com/cloudogu/kubectl-ces-plugin
   caveats: |
@@ -49,7 +49,6 @@ spec:
 
     For additional options:
       $ kubectl ces --help
-      or https://github.com/cloudogu/kubectl-ces-plugin/blob/v0.1.0/doc/USAGE.md
-
+      or https://github.com/cloudogu/kubectl-ces-plugin/blob/develop/docs/getting_started_en.md
   description: |
-    This is a new plugin
+    A `kubectl` plugin that simplifies interaction and maintenance of a multi-node Cloudogu EcoSystem.
