@@ -29,11 +29,8 @@ spec:
   shortDescription: A new plugin
   homepage: https://github.com/cloudogu/kubectl-ces-plugin
   caveats: |
-    Usage:
-      $ kubectl ces
-
-    For additional options:
-      $ kubectl ces --help
-      or https://github.com/cloudogu/kubectl-ces-plugin/blob/develop/docs/getting_started_en.md
+    * For resources that are not in default namespace, currently you must
+      specify -n/--namespace explicitly (the current namespace setting is not
+      yet used).
   description: |
     A `kubectl` plugin that simplifies interaction and maintenance of a multi-node Cloudogu EcoSystem.
