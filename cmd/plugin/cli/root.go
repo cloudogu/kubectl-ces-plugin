@@ -37,7 +37,7 @@ func RootCmd() *cobra.Command {
 	kubeResourceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
 
 	cmd := &cobra.Command{
-		Use:   "kubectl ces",
+		Use:   "ces",
 		Short: "Manage the Cloudogu EcoSystem",
 		Long: `Provides various functions to make the management of the Cloudogu EcoSystem easier.
 Among others, this includes editing dogu configurations.`,
@@ -53,6 +53,12 @@ Among others, this includes editing dogu configurations.`,
 			return nil
 		},
 	}
+
+	// Cobra doesn't have a way to specify a two word command (ie. "kubectl krew"), so set a custom usage template
+	// with kubectl in it. Cobra will use this template for the root and all child commands.
+	cmd.SetUsageTemplate(strings.NewReplacer(
+		"{{.UseLine}}", "kubectl {{.UseLine}}",
+		"{{.CommandPath}}", "kubectl {{.CommandPath}}").Replace(cmd.UsageTemplate()))
 
 	cobra.OnInitialize(initConfig)
 	flags.AddFlagSet(cmd.PersistentFlags())
