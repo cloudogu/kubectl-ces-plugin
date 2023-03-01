@@ -6,8 +6,9 @@ GOTAG=1.18.6
 MAKEFILES_VERSION=7.5.0
 
 .DEFAULT_GOAL:=help
-
-BINARY=
+GO_ENV_VARS=CGO_ENABLED=0
+ADDITIONAL_LDFLAGS?=-extldflags -static -s -w
+GO_BUILD_FLAGS?=-a -tags netgo $(LDFLAGS) -installsuffix cgo -o $(BINARY)
 
 KREW_MANIFEST=deploy/krew/plugin.yaml
 
