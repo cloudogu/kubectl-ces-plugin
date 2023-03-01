@@ -1,0 +1,28 @@
+project_name: ces
+release:
+  github:
+    owner: cloudogu
+    name: kubectl-ces-plugin
+builds:
+  - id: ces
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - "386"
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    main: main.go
+    ldflags: -s -w
+      -X github.com/cloudogu/kubectl-ces-plugin/pkg/version.version=
+archives:
+  - id: ces
+    builds:
+      - ces
+    name_template: `"{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"`
+    format_overrides:
+      - goos: windows
+        format: zip
