@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	optionalVersionedModulePathPattern = `(v\d+/)?`
+	optionalCIPathPattern              = "(_.+)?"   // allow paths like ".../<pkg>_PR-2/..."
+	optionalVersionedModulePathPattern = `(v\d+/)?` // allow paths like ".../<pkg>/v2/..."
 )
 
-var loggerFilePathPattern = fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/logger.go", optionalVersionedModulePathPattern)
+var loggerFilePathPattern = fmt.Sprintf("kubectl-ces-plugin%s/pkg/%slogger/logger.go", optionalCIPathPattern, optionalVersionedModulePathPattern)
 
 // Formatter - logrus formatter, implements logrus.Formatter
 type Formatter struct {
