@@ -9,7 +9,7 @@ import (
 )
 
 func Test_getFrame(t *testing.T) {
-	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/formatter.go", modulePathPattern)
+	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/formatter.go", optionalVersionedModulePathPattern)
 	filePathExpression, err := regexp.Compile(testDelegateMethodeOneFrameBeforeThisFramesTest)
 	require.NoError(t, err)
 
@@ -26,15 +26,7 @@ func Test_getFrame(t *testing.T) {
 func Test_loggerFilePathPattern(t *testing.T) {
 	testExpression, err := regexp.Compile(loggerFilePathPattern)
 	require.NoError(t, err)
-	t.Run("should match path if used in cesapp", func(t *testing.T) {
-		testPath := "kubectl-ces-plugin/pkg/logger/logger.go"
-
-		foundMatch := testExpression.MatchString(testPath)
-
-		require.True(t, foundMatch)
-	})
-
-	t.Run("should match path if used as module", func(t *testing.T) {
+	t.Run("should match path if used in kubectl-ces-plugin", func(t *testing.T) {
 		testPath := "kubectl-ces-plugin/pkg/logger/logger.go"
 
 		foundMatch := testExpression.MatchString(testPath)

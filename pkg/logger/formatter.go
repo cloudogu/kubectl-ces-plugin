@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	modulePathPattern = `(v\d+/)?`
+	optionalVersionedModulePathPattern = `(v\d+/)?`
 )
 
-var loggerFilePathPattern = fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/logger.go", modulePathPattern)
+var loggerFilePathPattern = fmt.Sprintf("kubectl-ces-plugin/pkg/%slogger/logger.go", optionalVersionedModulePathPattern)
 
 // Formatter - logrus formatter, implements logrus.Formatter
 type Formatter struct {
