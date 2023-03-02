@@ -13,6 +13,8 @@ import (
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/portforward"
 )
 
+const noConfigFieldsErrorMsg = "dogu '%s' has no matching configuration fields for key '%s'"
+
 func New(doguName, namespace string, restConfig *rest.Config) (*doguConfigService, error) {
 	forwarder, reg, err := createPortForwardAndRegistry(namespace, restConfig)
 	if err != nil {
@@ -55,7 +57,7 @@ func (s doguConfigService) Edit(registryKey string, deleteOnEmpty bool) error {
 	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		matchingFields := matchConfigurationFields(dogu, registryKey)
 		if len(matchingFields) == 0 {
-			return fmt.Errorf("dogu '%s' has no matching configuration fields for key '%s'", dogu.GetSimpleName(), registryKey)
+			return fmt.Errorf(noConfigFieldsErrorMsg, dogu.GetSimpleName(), registryKey)
 		}
 
 		return editor.EditConfiguration(matchingFields, deleteOnEmpty)
@@ -84,7 +86,7 @@ func (s doguConfigService) Set(registryKey string, registryValue string) error {
 	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		found, field := configurationFieldByKey(dogu, registryKey)
 		if !found {
-			return fmt.Errorf("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
+			return fmt.Errorf(noConfigFieldsErrorMsg, dogu.GetSimpleName(), registryKey)
 		}
 
 		return editor.SetFieldToValue(*field, registryValue, false)
@@ -96,7 +98,7 @@ func (s doguConfigService) Delete(registryKey string) error {
 	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		found, field := configurationFieldByKey(dogu, registryKey)
 		if !found {
-			return fmt.Errorf("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
+			return fmt.Errorf(noConfigFieldsErrorMsg, dogu.GetSimpleName(), registryKey)
 		}
 
 		return editor.DeleteField(*field)
@@ -131,7 +133,7 @@ func (s doguConfigService) GetValue(registryKey string) (string, error) {
 	err := s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		found, field := configurationFieldByKey(dogu, registryKey)
 		if !found {
-			return fmt.Errorf("dogu '%s' has no configuration field for key '%s'", dogu.GetSimpleName(), registryKey)
+			return fmt.Errorf(noConfigFieldsErrorMsg, dogu.GetSimpleName(), registryKey)
 		}
 
 		var err error

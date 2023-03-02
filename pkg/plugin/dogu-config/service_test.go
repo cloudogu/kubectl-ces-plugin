@@ -178,7 +178,7 @@ func Test_doguConfigService_Set(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "dogu 'ldap' has no configuration field for key 'test-key'")
+		assert.ErrorContains(t, err, "dogu 'ldap' has no matching configuration fields for key 'test-key'")
 	})
 	t.Run("should fail on set value", func(t *testing.T) {
 		// given
@@ -259,7 +259,7 @@ func Test_doguConfigService_Delete(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "dogu 'ldap' has no configuration field for key 'test-key'")
+		assert.ErrorContains(t, err, "dogu 'ldap' has no matching configuration fields for key 'test-key'")
 	})
 	t.Run("should fail to delete key", func(t *testing.T) {
 		// given
@@ -412,7 +412,7 @@ func Test_doguConfigService_GetValue(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "dogu 'ldap' has no configuration field for key 'test-key'")
+		assert.ErrorContains(t, err, "dogu 'ldap' has no matching configuration fields for key 'test-key'")
 	})
 	t.Run("should fail to get value for key", func(t *testing.T) {
 		// given
