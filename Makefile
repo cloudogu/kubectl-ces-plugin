@@ -12,6 +12,8 @@ GOARCH?=amd64
 GO_BUILD_FLAGS?=-a -tags netgo -ldflags "-extldflags -static -s -w -X main.Version=$(VERSION) -X main.CommitID=$(COMMIT_ID)" -installsuffix cgo
 CUSTOM_GO_MOUNT?=-v /tmp:/tmp
 
+GITHUB_DOWNLOAD_URI=https://github.com/cloudogu/kubectl-ces-plugin/releases/download
+
 LINUX_TARGET=$(TARGET_DIR)/linux
 WINDOWS_TARGET=$(TARGET_DIR)/windows
 DARWIN_TARGET=$(TARGET_DIR)/darwin
@@ -136,6 +138,9 @@ ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN}: ${BINARY_DARWIN}
 .PHONY: krew-update-manifest-versions
 krew-update-manifest-versions: ## Update the kubectl plugin manifest with the current artefact version.
 	@yq -i ".spec.version |= \"${VERSION}\"" ${KREW_MANIFEST}
+	@yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"linux\").uri=\"${GITHUB_DOWNLOAD_URI}/${VERSION}/${KREW_ARCHIVE_LINUX}\"" deploy/krew/plugin.yaml
+	@yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"windows\").uri=\"${GITHUB_DOWNLOAD_URI}/${VERSION}/${KREW_ARCHIVE_WINDOWS}\"" deploy/krew/plugin.yaml
+	@yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"darwin\").uri=\"${GITHUB_DOWNLOAD_URI}/${VERSION}/${KREW_ARCHIVE_DARWIN}\"" deploy/krew/plugin.yaml
 
 .PHONY: krew-update-checksums
 krew-update-checksums: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN}  ## Update SHA256 checksums in the KREW manifest.
