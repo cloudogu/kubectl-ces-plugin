@@ -106,7 +106,7 @@ ${BINARY_DARWIN}: $(SRC) $(DARWIN_TARGET_DIRSTAMP)
 ## Managing KREW plugin generation
 
 .PHONY: krew-create-archives
-krew-create-archives: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} ## Create KREW archives for all supported OSs.
+krew-create-archives: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} ## Create KREW archives for all supportedd OSs.
 
 ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX}: ${BINARY_LINUX}
 	@cp LICENSE ${LINUX_TARGET}
@@ -118,6 +118,10 @@ ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX}: ${BINARY_LINUX}
 	@cd ${LINUX_TARGET} && tar -czvf ${KREW_ARCHIVE_LINUX} * > /dev/null
 
 ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS}: ${BINARY_WINDOWS}
+
+ifeq ($(ENVIRONMENT), ci)
+	@echo "CI recognized: Archiving $@ must be done separately"
+else
 	@cp LICENSE ${WINDOWS_TARGET}
 	@if test -f $@ ; then \
   		echo "Found existing KREW archive $@. Deleting..." ; \
@@ -125,6 +129,7 @@ ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS}: ${BINARY_WINDOWS}
   		echo "Continue archiving..." ; \
   	fi
 	@cd ${WINDOWS_TARGET} && zip ${KREW_ARCHIVE_WINDOWS} * > /dev/null
+endif
 
 ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN}: ${BINARY_DARWIN}
 	@cp LICENSE ${DARWIN_TARGET}
