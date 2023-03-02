@@ -18,7 +18,11 @@ type defaultServiceFactory struct {
 
 func (sf *defaultServiceFactory) create(doguName string) (doguConfigService, error) {
 	k8sArgs := sf.cliConfig.Get(util.CliTransportParamK8sArgs)
-	cfg := (k8sArgs).(*genericclioptions.ConfigFlags)
+	cfg, ok := (k8sArgs).(*genericclioptions.ConfigFlags)
+	if !ok {
+		return nil, fmt.Errorf("k8s args are not of type *genericclioptions.ConfigFlags")
+	}
+
 	namespace := ""
 	if cfg.Namespace != nil {
 		namespace = *cfg.Namespace
