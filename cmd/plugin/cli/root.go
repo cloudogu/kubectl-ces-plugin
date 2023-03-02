@@ -44,8 +44,12 @@ Among others, this includes editing dogu configurations.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			logger.ConfigureLogger()
-			err := viper.BindPFlags(cmd.Flags())
+			err := logger.ConfigureLogger()
+			if err != nil {
+				return err
+			}
+
+			err = viper.BindPFlags(cmd.Flags())
 			cmd.SetErr(streams.ErrOut)
 			if err != nil {
 				return err

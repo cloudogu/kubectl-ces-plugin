@@ -73,19 +73,22 @@ func createFormatter() *Formatter {
 	return formatter
 }
 
-func getLogLevelFromEnv() logrus.Level {
+func getLogLevelFromEnv() (logrus.Level, error) {
 	logLevelRef := viper.GetViper().Get(util.CliTransportLogLevel)
-	logLevel := *(logLevelRef).(*LogLevel)
+	logLevel, ok := logLevelRef.(*LogLevel)
+	if !ok {
+		return logrus.WarnLevel, fmt.Errorf("log level is not of expected type")
+	}
 
-	switch logLevel {
+	switch *logLevel {
 	case LogLevelError:
-		return logrus.ErrorLevel
+		return logrus.ErrorLevel, nil
 	case LogLevelWarn:
-		return logrus.WarnLevel
+		return logrus.WarnLevel, nil
 	case LogLevelInfo:
-		return logrus.InfoLevel
+		return logrus.InfoLevel, nil
 	case LogLevelDebug:
-		return logrus.DebugLevel
+		return logrus.DebugLevel, nil
 	default:
 		panic("unsupported log level should be caught during the CLI flag parsing")
 	}
@@ -170,8 +173,11 @@ func (ll *NamedLogger) Errorf(format string, args ...interface{}) {
 }
 
 // ConfigureLogger sets up both the logging framework native to this application as well to used libraries.
-func ConfigureLogger() {
-	level := getLogLevelFromEnv()
+func ConfigureLogger() error {
+	level, err := getLogLevelFromEnv()
+	if err != nil {
+		return fmt.Errorf("could not configure log level")
+	}
 
 	logrusLog := logrus.New()
 	logrusLog.SetFormatter(formatter)
@@ -184,4 +190,6 @@ func ConfigureLogger() {
 	core.GetLogger = func() core.Logger {
 		return cesappLibLogger
 	}
+
+	return nil
 }
