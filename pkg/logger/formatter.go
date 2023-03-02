@@ -58,15 +58,29 @@ type Formatter struct {
 
 // Format an log entry
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
+
+	// output buffer
+	b := &bytes.Buffer{}
+
+	f.timeAndLevel(entry, b)
+
+	err := f.fieldsAndMessage(entry, b)
+	if err != nil {
+		return nil, err
+	}
+
+	b.WriteByte('\n')
+
+	return b.Bytes(), nil
+}
+
+func (f *Formatter) timeAndLevel(entry *logrus.Entry, b *bytes.Buffer) {
 	levelColor := getColorByLevel(entry.Level)
 
 	timestampFormat := f.TimestampFormat
 	if timestampFormat == "" {
 		timestampFormat = time.StampMilli
 	}
-
-	// output buffer
-	b := &bytes.Buffer{}
 
 	// write time
 	b.WriteString(entry.Time.Format(timestampFormat))
@@ -98,7 +112,9 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if !f.NoColors && f.NoFieldsColors {
 		b.WriteString("\x1b[0m")
 	}
+}
 
+func (f *Formatter) fieldsAndMessage(entry *logrus.Entry, b *bytes.Buffer) error {
 	// write fields
 	if f.FieldsOrder == nil {
 		f.writeFields(b, entry)
@@ -117,7 +133,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if f.CallerFirst {
 		err := f.writeCaller(b, entry)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to write caller")
+			return fmt.Errorf("failed to write caller: %w", err)
 		}
 	}
 
@@ -131,13 +147,10 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if !f.CallerFirst {
 		err := f.writeCaller(b, entry)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to write caller")
+			return fmt.Errorf("failed to write caller: %w", err)
 		}
 	}
-
-	b.WriteByte('\n')
-
-	return b.Bytes(), nil
+	return nil
 }
 
 func (f *Formatter) writeCaller(b *bytes.Buffer, entry *logrus.Entry) error {
