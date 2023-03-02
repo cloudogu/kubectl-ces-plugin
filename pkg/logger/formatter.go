@@ -62,9 +62,9 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	// output buffer
 	b := &bytes.Buffer{}
 
-	f.timeAndLevel(entry, b)
+	f.writeTimeAndLevel(entry, b)
 
-	err := f.fieldsAndMessage(entry, b)
+	err := f.writeFieldsAndMessage(entry, b)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (f *Formatter) timeAndLevel(entry *logrus.Entry, b *bytes.Buffer) {
+func (f *Formatter) writeTimeAndLevel(entry *logrus.Entry, b *bytes.Buffer) {
 	levelColor := getColorByLevel(entry.Level)
 
 	timestampFormat := f.TimestampFormat
@@ -114,7 +114,7 @@ func (f *Formatter) timeAndLevel(entry *logrus.Entry, b *bytes.Buffer) {
 	}
 }
 
-func (f *Formatter) fieldsAndMessage(entry *logrus.Entry, b *bytes.Buffer) error {
+func (f *Formatter) writeFieldsAndMessage(entry *logrus.Entry, b *bytes.Buffer) error {
 	// write fields
 	if f.FieldsOrder == nil {
 		f.writeFields(b, entry)
