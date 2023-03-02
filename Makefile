@@ -15,6 +15,9 @@ CUSTOM_GO_MOUNT?=-v /tmp:/tmp
 LINUX_TARGET=$(TARGET_DIR)/linux
 WINDOWS_TARGET=$(TARGET_DIR)/windows
 DARWIN_TARGET=$(TARGET_DIR)/darwin
+LINUX_TARGET_DIRSTAMP=${LINUX_TARGET}/.dirstamp
+WINDOWS_TARGET_DIRSTAMP=${WINDOWS_TARGET}/.dirstamp
+DARWIN_TARGET_DIRSTAMP=${DARWIN_TARGET}/.dirstamp
 
 ENV_CGO_ENABLED=CGO_ENABLED=0
 ENV_GOARCH=GOARCH=${GOARCH}
@@ -50,12 +53,17 @@ include build/make/clean.mk
 include build/make/digital-signature.mk
 include build/make/release.mk
 
-$(LINUX_TARGET):
+${LINUX_TARGET_DIRSTAMP}:
 	@mkdir -p $(LINUX_TARGET)
-$(WINDOWS_TARGET):
+	@touch $@
+
+$(WINDOWS_TARGET_DIRSTAMP):
 	@mkdir -p $(WINDOWS_TARGET)
-$(DARWIN_TARGET):
+	@touch $@
+
+$(DARWIN_TARGET_DIRSTAMP):
 	@mkdir -p $(DARWIN_TARGET)
+	@touch $@
 
 .PHONY: compile-crossplatform
 compile-crossplatform:  ## Compile the plugin for linux, windows and darwin.
@@ -63,7 +71,7 @@ compile-crossplatform:  ## Compile the plugin for linux, windows and darwin.
 	@make -e ${WINDOWS_TARGET}/${ARTIFACT_ID}.exe
 	@make -e ${DARWIN_TARGET}/${ARTIFACT_ID}
 
-${BINARY_LINUX}: $(SRC) $(LINUX_TARGET)
+${BINARY_LINUX}: $(SRC) $(LINUX_TARGET_DIRSTAMP)
 	@echo "Compiling $@"
 	@GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_LINUX}" \
     		${ENV_CGO_ENABLED} \
@@ -71,8 +79,9 @@ ${BINARY_LINUX}: $(SRC) $(LINUX_TARGET)
     		${ENV_GOOS_LINUX} \
     		${ENV_BINARY_LINUX} \
 		make -e compile
+	@touch $@
 
-${BINARY_WINDOWS}: $(SRC) $(WINDOWS_TARGET)
+${BINARY_WINDOWS}: $(SRC) $(WINDOWS_TARGET_DIRSTAMP)
 	@echo "Compiling $@"
 	@GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_WINDOWS}" \
     		${ENV_CGO_ENABLED} \
@@ -80,8 +89,9 @@ ${BINARY_WINDOWS}: $(SRC) $(WINDOWS_TARGET)
     		${ENV_GOOS_WINDOWS} \
     		${ENV_BINARY_WINDOWS} \
 	  	make -e compile
+	@touch $@
 
-${BINARY_DARWIN}: $(SRC) $(DARWIN_TARGET)
+${BINARY_DARWIN}: $(SRC) $(DARWIN_TARGET_DIRSTAMP)
 	@echo "Compiling $@"
 	@GO_ENV_VARS="${ENV_CGO_ENABLED} ${ENV_GOARCH} ${ENV_GOOS_DARWIN}" \
 		${ENV_CGO_ENABLED} \
@@ -89,31 +99,46 @@ ${BINARY_DARWIN}: $(SRC) $(DARWIN_TARGET)
 		${ENV_GOOS_DARWIN} \
 		${ENV_BINARY_DARWIN} \
 		make -e compile
-
+	@touch $@
 
 ## Managing KREW plugin generation
 
-.PHONY: create-krew-archives
-create-krew-archives: ${KREW_ARCHIVE_LINUX} ${KREW_ARCHIVE_WINDOWS} ${KREW_ARCHIVE_DARWIN} ## Create KREW archives for all supported OSs.
+.PHONY: krew-create-archives
+krew-create-archives: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} ## Create KREW archives for all supported OSs.
 
-${KREW_ARCHIVE_LINUX}: ${BINARY_LINUX}
+${LINUX_TARGET}/${KREW_ARCHIVE_LINUX}: ${BINARY_LINUX}
 	@cp LICENSE ${LINUX_TARGET}
-	@cd ${LINUX_TARGET} && tar -czvf $@ * > /dev/null
+	@if test -f $@ ; then \
+  		echo "Found existing KREW archive $@. Deleting..." ; \
+  		rm $@ ; \
+  		echo "Continue archiving..." ; \
+  	fi
+	@cd ${LINUX_TARGET} && tar -czvf ${KREW_ARCHIVE_LINUX} * > /dev/null
 
-${KREW_ARCHIVE_WINDOWS}: ${BINARY_WINDOWS}
+${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS}: ${BINARY_WINDOWS}
 	@cp LICENSE ${WINDOWS_TARGET}
-	@cd ${WINDOWS_TARGET} && zip $@ * > /dev/null
+	@if test -f $@ ; then \
+  		echo "Found existing KREW archive $@. Deleting..." ; \
+  		rm $@ ; \
+  		echo "Continue archiving..." ; \
+  	fi
+	@cd ${WINDOWS_TARGET} && zip ${KREW_ARCHIVE_WINDOWS} * > /dev/null
 
-${KREW_ARCHIVE_DARWIN}: ${BINARY_DARWIN}
+${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN}: ${BINARY_DARWIN}
 	@cp LICENSE ${DARWIN_TARGET}
-	@cd ${DARWIN_TARGET} && tar -czvf $@ * > /dev/null
+	@if test -f $@ ; then \
+  		echo "Found existing KREW archive $@. Deleting..." ; \
+  		rm $@ ; \
+  		echo "Continue archiving..." ; \
+  	fi
+	@cd ${DARWIN_TARGET} && tar -czvf ${KREW_ARCHIVE_DARWIN} * > /dev/null
 
-.PHONY: update-krew-version
-update-krew-version: ## Update the kubectl plugin manifest with the current artefact version.
+.PHONY: krew-update-manifest-versions
+krew-update-manifest-versions: ## Update the kubectl plugin manifest with the current artefact version.
 	@yq -i ".spec.version |= \"${VERSION}\"" ${KREW_MANIFEST}
 
-.PHONY: update-krew-checksums
-update-krew-checksums:  ${KREW_ARCHIVE_LINUX} ${KREW_ARCHIVE_WINDOWS} ${KREW_ARCHIVE_DARWIN} ## Update SHA256 checksums in the KREW manifest.
+.PHONY: krew-update-checksums
+krew-update-checksums: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN}  ## Update SHA256 checksums in the KREW manifest.
 	@echo "Generating Checksums"
 
 	@export SHA256_LINUX="$$(sha256sum ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} | awk {'print $$1'})" ; \
@@ -126,6 +151,10 @@ update-krew-checksums:  ${KREW_ARCHIVE_LINUX} ${KREW_ARCHIVE_WINDOWS} ${KREW_ARC
 	@export SHA256_DARWIN="$$(sha256sum ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} | awk {'print $$1'})" ; \
 		yq -i ".spec.platforms[] |= select(.selector.matchLabels.os == \"darwin\").sha256=\"$${SHA256_DARWIN}\"" deploy/krew/plugin.yaml
 
+.PHONY krew-collect:
+krew-collect: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} ## Move all cross-compiles KREW archives in the target directory.
+	@echo "Moving archives to ${TARGET_DIR}"
+	@mv ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} ${TARGET_DIR}
 
 ##@ Compiling go software
 
