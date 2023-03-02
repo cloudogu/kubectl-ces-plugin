@@ -54,7 +54,7 @@ type doguConfigService struct {
 func (s doguConfigService) Edit(registryKey string, deleteOnEmpty bool) error {
 	return s.delegator.Delegate(func(dogu *core.Dogu, editor doguConfigurationEditor) error {
 		matchingFields := matchConfigurationFields(dogu, registryKey)
-		if matchingFields == nil || len(matchingFields) == 0 {
+		if len(matchingFields) == 0 {
 			return fmt.Errorf("dogu '%s' has no matching configuration fields for key '%s'", dogu.GetSimpleName(), registryKey)
 		}
 
