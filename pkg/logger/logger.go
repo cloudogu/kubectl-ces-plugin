@@ -56,8 +56,8 @@ func GetInstance() *NamedLogger {
 	return loggerInstance
 }
 
-func createFormatter() Formatter {
-	formatter := Formatter{
+func createFormatter() *Formatter {
+	formatter := &Formatter{
 		HideKeys:        true,
 		FieldsOrder:     []string{"component", "category"},
 		TimestampFormat: time.RFC3339,
@@ -174,7 +174,7 @@ func ConfigureLogger() {
 	level := getLogLevelFromEnv()
 
 	logrusLog := logrus.New()
-	logrusLog.SetFormatter(&logrus.TextFormatter{})
+	logrusLog.SetFormatter(formatter)
 	logrusLog.SetLevel(level)
 
 	loggerInstance = &NamedLogger{name: "kubectl-ces", logger: logrusLog}
