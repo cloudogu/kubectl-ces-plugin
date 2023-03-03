@@ -1,79 +1,80 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
-	"github.com/cloudogu/kubectl-ces-plugin/pkg/plugin"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tj/go-spin"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/dogu-config"
+	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
+	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
 )
 
-var (
-	KubernetesConfigFlags *genericclioptions.ConfigFlags
+const (
+	flagKeyLogLevel = logger.LogLevelKey
 )
 
 func RootCmd() *cobra.Command {
+	streams := genericclioptions.IOStreams{
+		In:     os.Stdin,
+		Out:    os.Stdout,
+		ErrOut: os.Stderr,
+	}
+	flags := pflag.NewFlagSet("kubectl-ces", pflag.ExitOnError)
+
+	// Set the default log level here. Alternatively supplied values overwrite the default during the flag parsing.
+	flagValueLogLevel := logger.LogLevelWarn
+	flagLogLevelRef := &flagValueLogLevel
+	flags.Var(flagLogLevelRef, flagKeyLogLevel, "define the log level")
+
+	pflag.CommandLine = flags
+	kubernetesConfigFlags := genericclioptions.NewConfigFlags(true)
+	kubeResourceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
+
 	cmd := &cobra.Command{
-		Use:           "ces",
-		Short:         "",
-		Long:          `.`,
+		Use:   "ces",
+		Short: "Manage the Cloudogu EcoSystem",
+		Long: `Provides various functions to make the management of the Cloudogu EcoSystem easier.
+Among others, this includes editing dogu configurations.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			log := logger.NewLogger()
-			log.Info("")
-
-			s := spin.New()
-			finishedCh := make(chan bool, 1)
-			namespaceName := make(chan string, 1)
-			go func() {
-				lastNamespaceName := ""
-				for {
-					select {
-					case <-finishedCh:
-						fmt.Printf("\r")
-						return
-					case n := <-namespaceName:
-						lastNamespaceName = n
-					case <-time.After(time.Millisecond * 100):
-						if lastNamespaceName == "" {
-							fmt.Printf("\r  \033[36mSearching for namespaces\033[m %s", s.Next())
-						} else {
-							fmt.Printf("\r  \033[36mSearching for namespaces\033[m %s (%s)", s.Next(), lastNamespaceName)
-						}
-					}
-				}
-			}()
-			defer func() {
-				finishedCh <- true
-			}()
-
-			if err := plugin.RunPlugin(KubernetesConfigFlags, namespaceName); err != nil {
-				return errors.Unwrap(err)
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			err := logger.ConfigureLogger()
+			if err != nil {
+				return err
 			}
 
-			log.Info("")
-
+			err = viper.BindPFlags(cmd.Flags())
+			cmd.SetErr(streams.ErrOut)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 	}
 
-	cobra.OnInitialize(initConfig)
+	// Cobra doesn't have a way to specify a two word command (ie. "kubectl krew"), so set a custom usage template
+	// with kubectl in it. Cobra will use this template for the root and all child commands.
+	cmd.SetUsageTemplate(strings.NewReplacer(
+		"{{.UseLine}}", "kubectl {{.UseLine}}",
+		"{{.CommandPath}}", "kubectl {{.CommandPath}}").Replace(cmd.UsageTemplate()))
 
-	KubernetesConfigFlags = genericclioptions.NewConfigFlags(false)
-	KubernetesConfigFlags.AddFlags(cmd.Flags())
+	cobra.OnInitialize(initConfig)
+	flags.AddFlagSet(cmd.PersistentFlags())
+	kubernetesConfigFlags.AddFlags(flags)
+	kubeResourceBuilderFlags.AddFlags(flags)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.Set(util.CliTransportParamK8sArgs, kubernetesConfigFlags)
+	viper.Set(util.CliTransportLogLevel, flagLogLevelRef)
+
+	cmd.AddCommand(dogu_config.Cmd())
+
 	return cmd
 }
 
