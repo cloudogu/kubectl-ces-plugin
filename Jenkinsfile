@@ -123,10 +123,14 @@ void stageAutomaticRelease() {
         String releaseBranch = git.getBranchName()
 
         stage('Cross-compile and package after Release') {
+            String krewManifest = "deploy/krew/plugin.yaml"
             git.checkout(releaseBranch)
             make 'clean krew-create-archives krew-collect'
             make 'krew-update-manifest-versions'
+
+            git.add(krewManifest)
             git.commit("bump KREW manifest to version ${releaseVersion}")
+
             make 'checksum'
         }
 
