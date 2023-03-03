@@ -59,8 +59,11 @@ node('docker') {
             stageStaticAnalysisSonarQube()
         }
 
-        stageAutomaticRelease()
-
+        docker.image("golang-with-tools")
+                .mountJenkinsUser()
+                .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
+                    stageAutomaticRelease()
+                }
     }
 }
 
@@ -117,9 +120,10 @@ void stageStaticAnalysisSonarQube() {
 void stageAutomaticRelease() {
     if (gitflow.isReleaseBranch()) {
         String releaseVersion = git.getSimpleBranchName()
+        String releaseBranch = git.getBranchName()
 
         stage('Cross-compile and package after Release') {
-            git.checkout(releaseVersion)
+            git.checkout(releaseBranch)
             make 'clean krew-create-archives krew-collect'
             make 'krew-update-manifest-versions'
             git.commit("bump KREW manifest to version ${releaseVersion}")
