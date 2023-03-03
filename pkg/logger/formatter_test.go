@@ -3,19 +3,20 @@ package logger
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"math"
 	"regexp"
 	"runtime"
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 )
 
 func Test_getFrame(t *testing.T) {
-	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("kubectl-ces-plugin%s/pkg/%slogger/formatter.go", optionalCIPathPattern, optionalVersionedModulePathPattern)
+	testDelegateMethodeOneFrameBeforeThisFramesTest := fmt.Sprintf("ces-plugin%s/pkg/%slogger/formatter.go", optionalCIPathPattern, optionalVersionedModulePathPattern)
 	filePathExpression, err := regexp.Compile(testDelegateMethodeOneFrameBeforeThisFramesTest)
 	require.NoError(t, err)
 
@@ -23,7 +24,7 @@ func Test_getFrame(t *testing.T) {
 	frameForThisLine := getFrame(*filePathExpression)
 
 	// then
-	require.Regexp(t, regexp.MustCompile("kubectl-ces-plugin(_.+)?/pkg/logger/formatter_test.go"), frameForThisLine.File)
+	require.Regexp(t, regexp.MustCompile("ces-plugin(_.+)?/pkg/logger/formatter_test.go"), frameForThisLine.File)
 	// asserting a specific line in source code makes this test error prone
 	// but it's really unlikely that the line number is zero if the function did right
 	require.NotEmpty(t, frameForThisLine.Line)
