@@ -11,7 +11,6 @@ github = new GitHub(this, git)
 changelog = new Changelog(this)
 Docker docker = new Docker(this)
 gpg = new Gpg(this, docker)
-goVersion = "1.18"
 
 // Configuration of repository
 repositoryOwner = "cloudogu"
@@ -35,8 +34,9 @@ node('docker') {
             markdown.check()
         }
 
+        String directoryWithCIDockerFile = "ci/"
         new Docker(this)
-                .image("golang:${goVersion}")
+            .build("golangWithTools", directoryWithCIDockerFile)
                 .mountJenkinsUser()
                 .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
 
@@ -117,15 +117,16 @@ void stageAutomaticRelease() {
     if (gitflow.isReleaseBranch()) {
         String releaseVersion = git.getSimpleBranchName()
 
-        stage('Finish Release') {
-            gitflow.finishRelease(releaseVersion, productionReleaseBranch)
-        }
-
         stage('Cross-compile and package after Release') {
             git.checkout(releaseVersion)
             make 'clean krew-create-archives krew-collect'
             make 'krew-update-manifest-versions'
+            // TODO make commit of the updated manifest
             make 'checksum'
+        }
+
+        stage('Finish Release') {
+            gitflow.finishRelease(releaseVersion, productionReleaseBranch)
         }
 
         stage('Sign after Release') {
