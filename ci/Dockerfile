@@ -9,5 +9,5 @@ RUN set -eux && \
   wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 && \
   echo "${YQ_CHECKSUM} *yq_linux_amd64" | sha256sum -c - && \
   chmod +x yq_linux_amd64 && \
-  mv yq_linux_amd64 /usr/bin/yq && \
-  yq --version
+  mv yq_linux_amd64 /usr/bin/yq
+
