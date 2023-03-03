@@ -2,8 +2,12 @@
 
 ## Installation
 
-1. [Krew](https://krew.sigs.k8s.io/docs/user-guide/setup/install/) installieren
-1. Das Plugin mit `kubectl krew install ces` installieren
+1. Laden Sie die neueste Version von [`kubectl-ces`](https://github.com/cloudogu/kubectl-ces-plugin/releases) entsprechend Ihrem Betriebssystem herunter.
+2. Entpacken Sie das Archiv (entweder wie folgt oder mit einem UI-Tool Ihrer Wahl):
+   - Linux: `tar -xvzf kubectl-ces_linux_amd64.tar.gz`
+   - Darwin: `tar -xvzf kubectl-ces_darwin_amd64.tar.gz`
+   - Windows: `unzip kubectl-ces_darwin_amd64.tar.gz`
+3. Kopieren Sie die entpackte Binärdatei in Ihren Ausführungspfad
 
 Danach ist das Plug-in betriebsbereit.
 
@@ -18,7 +22,7 @@ Interaktives Bearbeiten von Konfigurationsschlüsseln (kann auch Werte validiere
 `kubectl ces dogu-config edit <dogu-name>`
 
 Abrufen eines Konfigurationswertes für einen gegebenen dogu und einen Konfigurationsschlüssel:
-kubectl ces dogu-config get <dogu-name> <key>`
+`kubectl ces dogu-config get <dogu-name> <key>`
 
 Setzen eines Konfigurationswertes für eine gegebene dogu und einen Konfigurationsschlüssel:
 `kubectl ces dogu-config set <dogu-name> <key> <value>`

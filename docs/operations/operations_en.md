@@ -2,8 +2,12 @@
 
 ## Installation
 
-1. Install [Krew](https://krew.sigs.k8s.io/docs/user-guide/setup/install/)
-1. Run `kubectl krew install ces` to install the plug-in
+1. Download the latest version of [`kubectl-ces`](https://github.com/cloudogu/kubectl-ces-plugin/releases) according to your operating system.
+2. extract the archive (either like this, or use a UI tool of your preference):
+   - Linux: `tar -xvzf kubectl-ces_linux_amd64.tar.gz`
+   - Darwin: `tar -xvzf kubectl-ces_darwin_amd64.tar.gz`
+   - Windows: `unzip kubectl-ces_darwin_amd64.tar.gz`
+3. Copy the extracted binary to your executional path
 
 After that, the plug-in is operational.
 
