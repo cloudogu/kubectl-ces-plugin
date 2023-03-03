@@ -2,7 +2,11 @@
 
 # CES kubectl plugin
 
-A `kubectl` plugin to interact with multi-node Cloudogu EcoSystem.
+A `kubectl` plugin that simplifies interaction and maintenance of a multi-node Cloudogu EcoSystem.
+
+For using `kubectl-ces` please see either the help pages `kubectl ces --help` or consult the [documentation](docs/operations/operations_en.md).
+
+---
 
 This plugin has been developed based on https://github.com/replicatedhq/krew-plugin-template.
 

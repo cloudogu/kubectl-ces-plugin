@@ -11,7 +11,6 @@ github = new GitHub(this, git)
 changelog = new Changelog(this)
 Docker docker = new Docker(this)
 gpg = new Gpg(this, docker)
-goVersion = "1.18"
 
 // Configuration of repository
 repositoryOwner = "cloudogu"
@@ -30,10 +29,37 @@ node('docker') {
             make 'clean'
         }
 
+        stage('Check Markdown Links') {
+            Markdown markdown = new Markdown(this)
+            markdown.check()
+        }
+
+        String directoryWithCIDockerFile = "ci/"
+        docker = new Docker(this)
+        docker.build("golang-with-tools", directoryWithCIDockerFile)
+        docker.image("golang-with-tools")
+                .mountJenkinsUser()
+                .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
+
+                    stage('Build') {
+                        make 'compile'
+                    }
+
+                    stage("Unit test") {
+                        make 'unit-test'
+                        junit allowEmptyResults: true, testResults: 'target/unit-tests/*-tests.xml'
+                    }
+
+                    stage("Review dog analysis") {
+                        stageStaticAnalysisReviewDog()
+                    }
+                }
 
         stage('SonarQube') {
             stageStaticAnalysisSonarQube()
         }
+
+        stageAutomaticRelease()
 
     }
 }
@@ -45,19 +71,6 @@ void gitWithCredentials(String command) {
                 returnStdout: true
         )
     }
-}
-
-void stageLintK8SResources() {
-    String kubevalImage = "cytopia/kubeval:0.13"
-    Makefile makefile = new Makefile(this)
-    String controllerVersion = makefile.getVersion()
-
-    docker
-            .image(kubevalImage)
-            .inside("-v ${WORKSPACE}/target:/data -t --entrypoint=")
-                    {
-                        sh "kubeval /data/${repositoryName}_${controllerVersion}.yaml --ignore-missing-schemas"
-                    }
 }
 
 void stageStaticAnalysisReviewDog() {
@@ -104,13 +117,13 @@ void stageStaticAnalysisSonarQube() {
 void stageAutomaticRelease() {
     if (gitflow.isReleaseBranch()) {
         String releaseVersion = git.getSimpleBranchName()
-        String dockerReleaseVersion = releaseVersion.split("v")[1]
 
-        stage('Build & Push Image') {
-            def dockerImage = docker.build("cloudogu/${repositoryName}:${dockerReleaseVersion}")
-            docker.withRegistry('https://registry.hub.docker.com/', 'dockerHubCredentials') {
-                dockerImage.push("${dockerReleaseVersion}")
-            }
+        stage('Cross-compile and package after Release') {
+            git.checkout(releaseVersion)
+            make 'clean krew-create-archives krew-collect'
+            make 'krew-update-manifest-versions'
+            git.commit("bump KREW manifest to version ${releaseVersion}")
+            make 'checksum'
         }
 
         stage('Finish Release') {
@@ -121,27 +134,18 @@ void stageAutomaticRelease() {
             gpg.createSignature()
         }
 
-        stage('Regenerate resources for release') {
-            new Docker(this)
-                    .image("golang:${goVersion}")
-                    .mountJenkinsUser()
-                    .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}")
-                            {
-                                make 'k8s-create-temporary-resource'
-                            }
-        }
-
-        stage('Push to Registry') {
-            Makefile makefile = new Makefile(this)
-            String controllerVersion = makefile.getVersion()
-            GString targetOperatorResourceYaml = "target/${repositoryName}_${controllerVersion}.yaml"
-
-            DoguRegistry registry = new DoguRegistry(this)
-            registry.pushK8sYaml(targetOperatorResourceYaml, repositoryName, "k8s", "${controllerVersion}")
+        def releaseId
+        stage('Add Github-Release') {
+            releaseId = github.createReleaseWithChangelog(releaseVersion, changelog, productionReleaseBranch)
         }
 
         stage('Add Github-Release') {
-            releaseId = github.createReleaseWithChangelog(releaseVersion, changelog, productionReleaseBranch)
+            releaseId=github.createReleaseWithChangelog(releaseVersion, changelog)
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces_linux_amd64.tar.gz")
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces_windows_amd64.zip")
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces_darwin_amd64.tar.gz")
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces.sha256sum")
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces.sha256sum.asc")
         }
     }
 }
