@@ -3,6 +3,7 @@ package portforward
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -14,42 +15,34 @@ import (
 	"github.com/cloudogu/kubectl-ces-plugin/pkg/logger"
 )
 
-// New creates a new port forwarder.
-func New(restConfig *rest.Config, pod types.NamespacedName, localPort, clusterPort int) *kubernetesPortForwarder {
-	return &kubernetesPortForwarder{
-		restConfig:  restConfig,
-		pod:         pod,
-		localPort:   localPort,
-		clusterPort: clusterPort,
+// New creates a new executive port forwarder.
+func New(restConfig *rest.Config, pod types.NamespacedName, localPort, clusterPort int) *executivePortForwarder {
+	return &executivePortForwarder{
+		dialerFactory: &portForwardDialerFactory{
+			restConfig: restConfig,
+			pod:        pod,
+		},
+		forwarderFactory: &kubernetesPortForwarderFactory{
+			localPort:   localPort,
+			clusterPort: clusterPort,
+		},
 	}
 }
 
-// kubernetesPortForwarder establishes a kubernetes port-forward for the specified resource.
-type kubernetesPortForwarder struct {
-	// restConfig is the kubernetes config
-	restConfig *rest.Config
-	// pod references the selected pod for this port forwarding
-	pod types.NamespacedName
-	// localPort is the local port that will be selected to expose the clusterPort
-	localPort int
-	// clusterPort is the target port for the pod
-	clusterPort int
+// executivePortForwarder establishes a kubernetes port-forward to the specified resource for the duration of a function call.
+type executivePortForwarder struct {
+	// dialerFactory creates
+	dialerFactory dialerFactory
+	// forwarderFactory creates the native port forward in use by this
+	forwarderFactory portForwarderFactory
 }
 
 // ExecuteWithPortForward establishes a port-forward until the given function returns.
-func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) error {
-	apiAddress := fmt.Sprintf("%s/api/v1/namespaces/%s/pods/%s/portforward",
-		kpf.restConfig.Host, kpf.pod.Namespace, kpf.pod.Name)
-	apiUrl, err := url.Parse(apiAddress)
+func (epf *executivePortForwarder) ExecuteWithPortForward(fn func() error) error {
+	dialer, err := epf.dialerFactory.create()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create dialer for port-forward: %w", err)
 	}
-
-	transport, upgrader, err := spdy.RoundTripperFor(kpf.restConfig)
-	if err != nil {
-		return err
-	}
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, apiUrl)
 
 	stopCh := make(chan struct{})
 	defer func() {
@@ -58,15 +51,13 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 	}()
 	readyCh := make(chan struct{})
 
-	stdOut := new(bytes.Buffer)
+	out := new(bytes.Buffer)
 	errOut := new(bytes.Buffer)
 
-	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", kpf.localPort, kpf.clusterPort)}, stopCh, readyCh, stdOut, errOut)
+	fw, err := epf.forwarderFactory.create(dialer, stopCh, readyCh, out, errOut)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create kubernetes port forwarder: %w", err)
 	}
-
-	logger.GetInstance().Infof("Starting port-forward %d:%d\n", kpf.localPort, kpf.clusterPort)
 
 	errCh := make(chan error)
 	go func() {
@@ -84,8 +75,58 @@ func (kpf *kubernetesPortForwarder) ExecuteWithPortForward(fn func() error) erro
 
 	err = fn()
 	if err != nil {
-		logger.GetInstance().Debugf("encountered error during port-forward; stdOut: %s; errOut: %s", stdOut, errOut)
+		logger.GetInstance().Debugf("encountered error during port-forward; out: %s; errOut: %s", out, errOut)
 		return fmt.Errorf("encountered error during port-forward: %w", err)
 	}
+
 	return nil
+}
+
+type portForwardDialerFactory struct {
+	// restConfig is the kubernetes config
+	restConfig *rest.Config
+	// pod references the selected pod for this port forwarding
+	pod types.NamespacedName
+}
+
+func (pfdf *portForwardDialerFactory) create() (dialer, error) {
+	apiUrl, err := createApiUrl(pfdf.restConfig.Host, pfdf.pod)
+	if err != nil {
+		return nil, err
+	}
+
+	transport, upgrader, err := spdy.RoundTripperFor(pfdf.restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, apiUrl), nil
+}
+
+func createApiUrl(host string, pod types.NamespacedName) (*url.URL, error) {
+	apiAddress := fmt.Sprintf("%s/api/v1/namespaces/%s/pods/%s/portforward",
+		host, pod.Namespace, pod.Name)
+	apiUrl, err := url.Parse(apiAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiUrl, nil
+}
+
+type kubernetesPortForwarderFactory struct {
+	// localPort is the local port that will be selected to expose the clusterPort
+	localPort int
+	// clusterPort is the target port for the pod
+	clusterPort int
+}
+
+func (pff *kubernetesPortForwarderFactory) create(dialer dialer, stopCh, readyCh chan struct{}, out, errOut io.Writer) (portForwarder, error) {
+	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", pff.localPort, pff.clusterPort)}, stopCh, readyCh, out, errOut)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.GetInstance().Infof("Starting port-forward %d:%d\n", pff.localPort, pff.clusterPort)
+	return pf, nil
 }
