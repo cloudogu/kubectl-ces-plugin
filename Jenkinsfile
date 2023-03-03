@@ -36,7 +36,7 @@ node('docker') {
 
         String directoryWithCIDockerFile = "ci/"
         new Docker(this)
-            .build("golangWithTools", directoryWithCIDockerFile)
+            .build("golang-with-tools", directoryWithCIDockerFile)
                 .mountJenkinsUser()
                 .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
 
