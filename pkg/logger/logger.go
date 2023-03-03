@@ -31,6 +31,7 @@ func initLoggerWithThrowAway() {
 	}
 }
 
+// GetInstance returns a configured logger.
 func GetInstance() *NamedLogger {
 	return loggerInstance
 }

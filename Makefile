@@ -8,7 +8,6 @@ LINT_VERSION?=v1.51.2
 .DEFAULT_GOAL:=help
 
 GOARCH?=amd64
-#GO_ENV_VARS=GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0
 GO_BUILD_FLAGS?=-a -tags netgo -ldflags "-extldflags -static -s -w -X main.Version=$(VERSION) -X main.CommitID=$(COMMIT_ID)" -installsuffix cgo
 CUSTOM_GO_MOUNT?=-v /tmp:/tmp
 
@@ -26,9 +25,6 @@ ENV_GOARCH=GOARCH=${GOARCH}
 ENV_GOOS_LINUX=GOOS=linux
 ENV_GOOS_WINDOWS=GOOS=windows
 ENV_GOOS_DARWIN=GOOS=darwin
-ENV_BINARY_LINUX=BINARY=${BINARY_LINUX}
-ENV_BINARY_WINDOWS=BINARY=${BINARY_WINDOWS}
-ENV_BINARY_DARWIN=BINARY=${BINARY_DARWIN}
 
 BINARY_LINUX=${LINUX_TARGET}/${ARTIFACT_ID}
 BINARY_WINDOWS=${WINDOWS_TARGET}/${ARTIFACT_ID}.exe
@@ -37,6 +33,9 @@ KREW_ARCHIVE_LINUX=${ARTIFACT_ID}_linux_${GOARCH}.tar.gz
 KREW_ARCHIVE_WINDOWS=${ARTIFACT_ID}_windows_${GOARCH}.zip
 KREW_ARCHIVE_DARWIN=${ARTIFACT_ID}_darwin_${GOARCH}.tar.gz
 
+ENV_BINARY_LINUX=BINARY=${BINARY_LINUX}
+ENV_BINARY_WINDOWS=BINARY=${BINARY_WINDOWS}
+ENV_BINARY_DARWIN=BINARY=${BINARY_DARWIN}
 KREW_MANIFEST=deploy/krew/plugin.yaml
 
 include build/make/variables.mk
@@ -69,9 +68,9 @@ $(DARWIN_TARGET_DIRSTAMP):
 
 .PHONY: compile-crossplatform
 compile-crossplatform:  ## Compile the plugin for linux, windows and darwin.
-	@make -e ${LINUX_TARGET}/${ARTIFACT_ID}
-	@make -e ${WINDOWS_TARGET}/${ARTIFACT_ID}.exe
-	@make -e ${DARWIN_TARGET}/${ARTIFACT_ID}
+	@make -e ${BINARY_LINUX}
+	@make -e ${BINARY_WINDOWS}
+	@make -e ${BINARY_DARWIN}
 
 ${BINARY_LINUX}: $(SRC) $(LINUX_TARGET_DIRSTAMP)
 	@echo "Compiling $@"
@@ -106,7 +105,7 @@ ${BINARY_DARWIN}: $(SRC) $(DARWIN_TARGET_DIRSTAMP)
 ## Managing KREW plugin generation
 
 .PHONY: krew-create-archives
-krew-create-archives: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} ## Create KREW archives for all supportedd OSs.
+krew-create-archives: ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX} ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS} ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN} ## Create KREW archives for all supported OSs.
 
 ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX}: ${BINARY_LINUX}
 	@cp LICENSE ${LINUX_TARGET}

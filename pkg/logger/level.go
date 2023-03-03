@@ -9,7 +9,7 @@ import (
 	"github.com/cloudogu/kubectl-ces-plugin/cmd/plugin/cli/util"
 )
 
-// LogLevelKey identifies
+// LogLevelKey identifies the log-level type.
 const LogLevelKey = "log-level"
 
 // CLI log level strings

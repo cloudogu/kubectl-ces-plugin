@@ -1,10 +1,12 @@
 package dogu_config
 
 import (
-	"github.com/cloudogu/cesapp-lib/core"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
+
+	"github.com/cloudogu/cesapp-lib/core"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
@@ -12,12 +14,7 @@ import (
 
 func Test_New(t *testing.T) {
 	t.Run("should succeed", func(t *testing.T) {
-		// given
-
-		// when
 		_, err := New(testDoguName, testNameSpace, &rest.Config{})
-
-		// then
 		require.NoError(t, err)
 	})
 }
