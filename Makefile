@@ -118,10 +118,6 @@ ${LINUX_TARGET}/${KREW_ARCHIVE_LINUX}: ${BINARY_LINUX}
 	@cd ${LINUX_TARGET} && tar -czvf ${KREW_ARCHIVE_LINUX} * > /dev/null
 
 ${WINDOWS_TARGET}/${KREW_ARCHIVE_WINDOWS}: ${BINARY_WINDOWS}
-
-ifeq ($(ENVIRONMENT), ci)
-	@echo "CI recognized: Archiving $@ must be done separately"
-else
 	@cp LICENSE ${WINDOWS_TARGET}
 	@if test -f $@ ; then \
   		echo "Found existing KREW archive $@. Deleting..." ; \
@@ -129,7 +125,6 @@ else
   		echo "Continue archiving..." ; \
   	fi
 	@cd ${WINDOWS_TARGET} && zip ${KREW_ARCHIVE_WINDOWS} * > /dev/null
-endif
 
 ${DARWIN_TARGET}/${KREW_ARCHIVE_DARWIN}: ${BINARY_DARWIN}
 	@cp LICENSE ${DARWIN_TARGET}
