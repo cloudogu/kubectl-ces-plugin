@@ -17,8 +17,7 @@ func setCmd(factory serviceFactory) *cobra.Command {
 			configKey := ""
 			configValue := ""
 
-			switch len(args) {
-			case 3:
+			if len(args) == 3 {
 				doguName = args[0]
 				configKey = args[1]
 				configValue = args[2]

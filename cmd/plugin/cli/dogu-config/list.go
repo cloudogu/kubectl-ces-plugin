@@ -14,8 +14,7 @@ func listCmd(factory serviceFactory) *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doguName := ""
-			switch len(args) {
-			case 1:
+			if len(args) == 1 {
 				doguName = args[0]
 			}
 

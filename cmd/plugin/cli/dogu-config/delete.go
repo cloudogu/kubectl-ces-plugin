@@ -16,8 +16,7 @@ func deleteCmd(factory serviceFactory) *cobra.Command {
 			doguName := ""
 			configKey := ""
 
-			switch len(args) {
-			case 2:
+			if len(args) == 2 {
 				doguName = args[0]
 				configKey = args[1]
 			}
