@@ -8,7 +8,7 @@ The used CLI framework [github.com/spf13/cobra](https://github.com/spf13/cobra) 
 Anyhow, this plug-in will most likely deal with a large enough bandwidth of use cases for this plugin to enhance this command structure. To provide a matching narrative for different use cases the structure adds a GROUP command:
 > kubectl ces GROUP VERB NOUN --ADJECTIVE
 
-This enables to keep an easily understandable command structure and enables use cases like these (some may not be implemented yet):
+This still keeps the command structure easily understandable and enables use cases like these (some may not be implemented yet):
 
 ```
 kubectl ces dogu-config edit redmine
