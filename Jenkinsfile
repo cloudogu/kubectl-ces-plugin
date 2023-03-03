@@ -122,7 +122,7 @@ void stageAutomaticRelease() {
             git.checkout(releaseVersion)
             make 'clean krew-create-archives krew-collect'
             make 'krew-update-manifest-versions'
-            // TODO make commit of the updated manifest
+            git.commit("bump KREW manifest to version ${releaseVersion}")
             make 'checksum'
         }
 
@@ -141,6 +141,9 @@ void stageAutomaticRelease() {
 
         stage('Add Github-Release') {
             releaseId=github.createReleaseWithChangelog(releaseVersion, changelog)
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces_linux_amd64.tar.gz")
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces_windows_amd64.zip")
+            github.addReleaseAsset("${releaseId}", "target/kubectl-ces_darwin_amd64.tar.gz")
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces.sha256sum")
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces.sha256sum.asc")
         }
