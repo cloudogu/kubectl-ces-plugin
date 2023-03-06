@@ -23,43 +23,50 @@ developmentBranch = "develop"
 currentBranch = "${env.BRANCH_NAME}"
 
 node('docker') {
-    timestamps {
-        stage('Checkout') {
-            checkout scm
-            make 'clean'
-        }
+    // make directory layout more predictable as go unit tests may fail with different directories
+    def jobName = JOB_NAME.replaceAll("%2F",'_').toLowerCase().split("/")[-1]
+    def jobNameShort = jobName[0..10]
+    echo "##### workspace/${repositoryName}_${jobNameShort}_${BUILD_NUMBER} #####"
+    ws( "workspace/${repositoryName}_${jobNameShort}_${BUILD_NUMBER}") {
 
-        stage('Check Markdown Links') {
-            Markdown markdown = new Markdown(this)
-            markdown.check()
-        }
+        timestamps {
+            stage('Checkout') {
+                checkout scm
+                make 'clean'
+            }
 
-        String directoryWithCIDockerFile = "ci/"
-        docker = new Docker(this)
-        docker.build("golang-with-tools", directoryWithCIDockerFile)
-        docker.image("golang-with-tools")
-                .mountJenkinsUser()
-                .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
+            stage('Check Markdown Links') {
+                Markdown markdown = new Markdown(this)
+                markdown.check()
+            }
 
-                    stage('Build') {
-                        make 'compile'
+            String directoryWithCIDockerFile = "ci/"
+            docker = new Docker(this)
+            docker.build("golang-with-tools", directoryWithCIDockerFile)
+            docker.image("golang-with-tools")
+                    .mountJenkinsUser()
+                    .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
+
+                        stage('Build') {
+                            make 'compile'
+                        }
+
+                        stage("Unit test") {
+                            make 'unit-test'
+                            junit allowEmptyResults: true, testResults: 'target/unit-tests/*-tests.xml'
+                        }
+
+                        stage("Review dog analysis") {
+                            stageStaticAnalysisReviewDog()
+                        }
                     }
 
-                    stage("Unit test") {
-                        make 'unit-test'
-                        junit allowEmptyResults: true, testResults: 'target/unit-tests/*-tests.xml'
-                    }
+            stage('SonarQube') {
+                stageStaticAnalysisSonarQube()
+            }
 
-                    stage("Review dog analysis") {
-                        stageStaticAnalysisReviewDog()
-                    }
-                }
-
-        stage('SonarQube') {
-            stageStaticAnalysisSonarQube()
+            stageAutomaticRelease()
         }
-
-        stageAutomaticRelease()
     }
 }
 
