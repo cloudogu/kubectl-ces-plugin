@@ -152,13 +152,8 @@ void stageAutomaticRelease() {
             gpg.createSignature()
         }
 
-        def releaseId
         stage('Add Github-Release') {
-            releaseId = github.createReleaseWithChangelog(releaseVersion, changelog, productionReleaseBranch)
-        }
-
-        stage('Add Github-Release') {
-            releaseId = github.createReleaseWithChangelog(releaseVersion, changelog)
+            def releaseId = github.createReleaseWithChangelog(releaseVersion, changelog, productionReleaseBranch)
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces_linux_amd64.tar.gz")
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces_windows_amd64.zip")
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces_darwin_amd64.tar.gz")
