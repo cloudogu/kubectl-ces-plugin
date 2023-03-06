@@ -23,47 +23,49 @@ developmentBranch = "develop"
 currentBranch = "${env.BRANCH_NAME}"
 
 node('docker') {
-    timestamps {
-        stage('Checkout') {
-            checkout scm
-            make 'clean'
-        }
+    // make directory layout more predictable as go unit tests may fail with different directories
+    def jobName = JOB_NAME.replaceAll("%2F",'_').toLowerCase().split("/")[-1]
+    def jobNameShort = jobName.length() >= 10 ? jobName[0..10] : jobName
+    ws( "workspace/${repositoryName}_${jobNameShort}_${BUILD_NUMBER}") {
 
-        stage('Check Markdown Links') {
-            Markdown markdown = new Markdown(this)
-            markdown.check()
-        }
+        timestamps {
+            stage('Checkout') {
+                checkout scm
+                make 'clean'
+            }
 
-        String directoryWithCIDockerFile = "ci/"
-        docker = new Docker(this)
-        docker.build("golang-with-tools", directoryWithCIDockerFile)
-        docker.image("golang-with-tools")
-                .mountJenkinsUser()
-                .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
+            stage('Check Markdown Links') {
+                Markdown markdown = new Markdown(this)
+                markdown.check()
+            }
 
-                    stage('Build') {
-                        make 'compile'
+            String directoryWithCIDockerFile = "ci/"
+            docker = new Docker(this)
+            docker.build("golang-with-tools", directoryWithCIDockerFile)
+            docker.image("golang-with-tools")
+                    .mountJenkinsUser()
+                    .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
+
+                        stage('Build') {
+                            make 'compile'
+                        }
+
+                        stage("Unit test") {
+                            make 'unit-test'
+                            junit allowEmptyResults: true, testResults: 'target/unit-tests/*-tests.xml'
+                        }
+
+                        stage("Review dog analysis") {
+                            stageStaticAnalysisReviewDog()
+                        }
                     }
 
-                    stage("Unit test") {
-                        make 'unit-test'
-                        junit allowEmptyResults: true, testResults: 'target/unit-tests/*-tests.xml'
-                    }
+            stage('SonarQube') {
+                stageStaticAnalysisSonarQube()
+            }
 
-                    stage("Review dog analysis") {
-                        stageStaticAnalysisReviewDog()
-                    }
-                }
-
-        stage('SonarQube') {
-            stageStaticAnalysisSonarQube()
+            stageAutomaticRelease()
         }
-
-        docker.image("golang-with-tools")
-                .mountJenkinsUser()
-                .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
-                    stageAutomaticRelease()
-                }
     }
 }
 
@@ -123,15 +125,23 @@ void stageAutomaticRelease() {
         String releaseBranch = git.getBranchName()
 
         stage('Cross-compile and package after Release') {
-            String krewManifest = "deploy/krew/plugin.yaml"
-            git.checkout(releaseBranch)
-            make 'clean krew-create-archives krew-collect'
-            make 'krew-update-manifest-versions'
+            // use different variable here as the object otherwise interferes with docker instances from the build-lib.
+            Docker altDocker = new Docker(this)
+            altDocker.image("golang-with-tools").mountJenkinsUser().inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}") {
+                String krewManifest = "deploy/krew/plugin.yaml"
+                git.checkout(releaseBranch)
+                make 'clean krew-create-archives krew-collect'
 
-            git.add(krewManifest)
-            git.commit("bump KREW manifest to version ${releaseVersion}")
+                // The Krew manifest cannot be updated during the local release stage (aka make go-release)
+                // because it needs the checksums of the cross-compiled archives. The archives are only built on
+                // during the CI release stage.
+                make 'krew-update-manifest-versions'
+                git.add(krewManifest)
+                // Commit before we call gitflow.finishRelease() so the local commit gets merged and pushed.
+                git.commit("bump KREW manifest to version ${releaseVersion}; update checksums")
 
-            make 'checksum'
+                make 'checksum'
+            }
         }
 
         stage('Finish Release') {
@@ -148,7 +158,7 @@ void stageAutomaticRelease() {
         }
 
         stage('Add Github-Release') {
-            releaseId=github.createReleaseWithChangelog(releaseVersion, changelog)
+            releaseId = github.createReleaseWithChangelog(releaseVersion, changelog)
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces_linux_amd64.tar.gz")
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces_windows_amd64.zip")
             github.addReleaseAsset("${releaseId}", "target/kubectl-ces_darwin_amd64.tar.gz")
