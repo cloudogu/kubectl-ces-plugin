@@ -26,7 +26,6 @@ node('docker') {
     // make directory layout more predictable as go unit tests may fail with different directories
     def jobName = JOB_NAME.replaceAll("%2F",'_').toLowerCase().split("/")[-1]
     def jobNameShort = jobName[0..10]
-    echo "##### workspace/${repositoryName}_${jobNameShort}_${BUILD_NUMBER} #####"
     ws( "workspace/${repositoryName}_${jobNameShort}_${BUILD_NUMBER}") {
 
         timestamps {
