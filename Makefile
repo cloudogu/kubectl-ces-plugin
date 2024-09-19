@@ -1,6 +1,6 @@
 # Set these to the desired values
 ARTIFACT_ID=kubectl-ces
-VERSION=0.1.2
+VERSION=0.2.0
 
 GOTAG=1.20.1
 MAKEFILES_VERSION=7.5.0
