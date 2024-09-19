@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [v0.2.0] - 2024-09-19
+### Changed
+- [#5] Relicense to AGPL-3.0-only
+
 ## [v0.1.2] - 2023-03-06
 - Internal fix of automatic releases
 
